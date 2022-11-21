@@ -1,0 +1,37 @@
+---
+title: "Project Regression Methods - 2022"
+author: "Céline Guex - sciper n°310673"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document :
+      number_sections: TRUE
+  includes:
+      in_header: Preamble.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+```
+
+```{r loading-data}
+load("Data/Breakdowns.RData")
+load("Data/Accidents.RData")
+load("Data/Fires.RData")
+Fi<-Fires
+Fi$Direction <- as.factor(Fi$Direction)
+Fi$Urban <- as.factor(Fi$Urban)
+Fi$Type <- as.factor(Fi$Type)
+Fi$Limit <- as.factor(Fi$Limit)
+Fi$SlopeType <- as.factor(Fi$SlopeType)
+Fi$Tunnel <- as.factor(Fi$Tunnel)
+Fi$Company <- as.factor(Fi$Company)
+```
+
+
+# Initial data analysis
+
+## Description of Fires dataset
+
+This data set lists fires that occurred in French tunnels. The data set gather `r n_distinct(Fi$Tunnel)` tunnels ran by `r n_distinct(Fi$Company)` companies. Many parameters are also registered, like  traffic, proportion of trucks among tunnel's users (in %), length of the tunnel, maximum speed allowed, inclination of the slope in the tunnel (in %), shape of the tunnel (type of slope in the tunnel) and situation of the tunnel (if it is in urban area or not). Some tunnels are unidirectional and some are bidirectional.
+We will use this data set to determine the factors that are the most likely to yields to fires in tunnel. We will also look for factors that might reduce the risk of fires.

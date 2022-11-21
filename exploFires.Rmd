@@ -1,0 +1,176 @@
+---
+title: "Data exploration of Fires"
+author: "Céline Guex"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(cache = TRUE)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(corrplot)
+library(plotly)
+library(ggExtra)
+```
+
+```{r loading-data}
+load("Data/Fires.RData")
+```
+
+# A first exploration of the dataset
+
+```{r header}
+head(Fires)
+#str(Fires)
+```
+
+```{r visu1}
+# Fires[1:nrow(Fires),2:ncol(Fires)] %>% pivot_longer(everything()) %>%
+#   ggplot(aes(value)) + 
+#   facet_wrap(~ name, scales = "free",ncol=3) +
+#   geom_histogram()+
+#   ggtitle("First look on the data")
+
+bw=0.3
+ggplot(Fires, aes(x=Fires))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.3, lwd=1)+
+  ggtitle("Repartition of y")
+# yp<-density(Fires$Fires)
+# pp<-rpois(length(yp),0.8)
+
+p<-data.frame(rexp(100,2))
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.3, lwd=1, bw=bw)+
+  ggtitle("exp(2)")
+
+p<-data.frame(rpois(10000,0.8))
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.3, lwd=1, bw=bw)+
+  ggtitle("pois(0.8)")
+  
+
+```
+
+```{r visu2}
+
+ggplot(Fires, aes(x=Traffic,y=Fires))+
+  geom_point(shape=1)+
+  ggtitle("Fires vs traffic")
+
+ggplot(Fires, aes(Fires, fill=as.factor(Limit)))+
+  geom_bar(position = position_dodge(0.5), alpha =0.5)+
+  ggtitle("Count of fire, by limit of speed")
+
+ggplot(Fires, aes(x=Fires))+
+  geom_bar(shape=1)+
+  facet_grid(~Type)+
+  ggtitle("Fires by type of tunnel")
+
+ggplot(Fires, aes(x=Fires, fill=Type))+
+  geom_bar(position="fill")+
+  ggtitle("Repartition of fires by tunnel type")
+
+ggplot(Fires, aes(x=Type))+
+  geom_bar()+
+  ggtitle("Repartition of tunnels")
+
+ggplot(Fires, aes(x=HGV,y=Traffic))+
+  geom_point()+
+  ggtitle("Traffic VS HGV")
+
+ggplot(Fires, aes(x=Fires, fill=Urban))+
+  geom_bar(position = "dodge")+
+  ggtitle("Fire VS Urban ")
+
+ggplot(Fires, aes(x=Slope, y=Fires))+
+  geom_point(shape=1)+
+  # geom_smooth(method="auto", se=TRUE, fullrange=FALSE, level=0.95,
+  #             color="red")+
+  ggtitle("Fires VS slope")
+
+ggplot(Fires, aes(x=Fires, fill=Company))+
+  geom_bar(position="fill")+
+  ggtitle("Fires by compagny")
+
+ggplot(Fires, aes(x=Tunnel, y=Fires))+
+  geom_point()+
+  ggtitle("Fires by Tunnel")
+
+ggplot(Fires, aes(x=Fires, fill=SlopeType))+
+  geom_bar(position = position_dodge(0.5))+
+  ggtitle("Fires by SlopeType")
+
+ggplot(Fires, aes(x=Fires, fill=SlopeType))+
+  geom_bar(position = "fill")+
+  ggtitle("Fires by SlopeType")
+
+ggplot(Fires, aes(x=Traffic, y=Fires, shape=SlopeType))+
+  geom_point()+
+  facet_grid(~SlopeType)+
+  ggtitle("Fires VS Traffic, by Slope type")
+  
+ggplot(Fires, aes(x= Slope,y=Fires))+
+  geom_bin_2d()+
+  ggtitle("Fires VS Slope")
+```
+
+## First linear model
+Without informations on tunnels or companies !
+
+```{r some_regressions}
+# lm1 <-lm(Fires~.,data=Fires)
+# summary(lm1)
+lm1 <- lm(Fires~Traffic+HGV+Slope+Urban+Type+Length+Limit+SlopeType, data = Fires)
+summary(lm1)
+```
+From this first linear regression, it seems that "Traffic", "HGV", "Urban" and "Length" are significant. However, the Adjusted R-squared is very small, which may indicate that this model is not appropriate. <br>
+Let us now look what problems we might have :
+```{r check_lm1_1}
+#Checking linearity
+y<-fitted.values(lm1)
+r<-rstandard(lm1)
+ggplot(data.frame(y,r),aes(y,r))+
+  geom_point(shape=1)+
+  geom_smooth(method="auto", se=TRUE, fullrange=FALSE, level=0.95)+
+  ggtitle("standardized residuals vs fitted values")
+```
+
+Here, it seems that there is a pattern appearing, thus independence of the residuals $r$ and the fitted values $\hat{y}$ might fail.
+
+```{r check_lm1_2}
+#checking variance
+r2 <- abs(r)
+ggplot(data.frame(y,r2),aes(y,r2))+
+  geom_point(shape=1)+
+  geom_smooth(method="auto", se=TRUE, fullrange=FALSE, level=0.95)+
+  ggtitle("absolute standardized residuals vs fitted values")
+```
+
+Here, the pattern suggest that $var(r)$ might increase with the mean increasing. Not good either...
+
+```{r check_lm1_3}
+# checking independance
+acf(r, lag.max = NULL,
+    type = c("correlation", "covariance", "partial"),
+    plot = TRUE, na.action = na.fail, demean = TRUE)
+pacf(r, lag.max = NULL,
+     plot = TRUE, na.action = na.fail, demean = TRUE)
+```
+It seems that there are no dependances within the standardized residuals... (I am not an expert with correlograms)
+
+```{r check_lm1_4}
+#checking normality
+ggplot(lm1, aes(sample=r))+
+  stat_qq()+
+  geom_abline(slope=1,intercept = 0)+
+  ggtitle("Normal Q-Q plot")
+```
+
+Here is the normal Q-Q plot with a line of slope 1 and intercept 0. The result of normality is quite correct. Maybe a bit right-skewed.
+We can notice that we have an outlier !!!
