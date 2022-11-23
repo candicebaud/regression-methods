@@ -27,6 +27,15 @@ head(Fires)
 #str(Fires)
 ```
 
+```{r correlations}
+# Data: numeric variables of the native mtcars dataset
+data <- Fires[ , c(2,3:5)]
+ 
+# Plot
+plot(data , pch=20 , cex=1.5 , col="#69b3a2")
+```
+
+
 ```{r visu1}
 # Fires[1:nrow(Fires),2:ncol(Fires)] %>% pivot_longer(everything()) %>%
 #   ggplot(aes(value)) + 
