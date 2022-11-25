@@ -1,0 +1,177 @@
+---
+title: "Fires Candice"
+author: "candice"
+date: "2022-11-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Packages
+
+```{r Packages, echo=FALSE, include = FALSE}
+lapply(c("dplyr","chron","ggplot2","tidyr","questionr","survival","forcats",
+         "data.table","table1","lubridate", "ggpubr","viridis","finalfit",
+         "ggpubr", "ggthemes", "gridExtra", "tidyverse", "rstatix","ggsci",
+         "wesanderson","kableExtra", "naniar","boot","scales","psych","ggcorrplot","ggradar", "caret", "gam"), 
+       library, character.only=TRUE)
+
+Sys.setlocale("LC_TIME", "English")
+setwd("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project")
+load("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project/Fires.RData")
+```
+
+## Exploratory
+The distribution looks exponential or poisson, and ther might be an outlier after 10. 
+```{r plot fires, echo=FALSE}
+Fires %>% group_by(Fires) %>% summarise(number=n()) %>% mutate(freq = number/sum(number)) %>% 
+  ggplot(aes(x=Fires, y = freq)) + geom_bar(stat='identity')
+```
+
+Who is the possible outlier ? 
+
+```{r who is the possible outlier, echo=FALSE}
+Fires %>% filter(Fires >10)
+```
+
+
+```{r correlation, echo=FALSE}
+panel.hist <- function(x, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+}
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+
+pairs(~ Fires + Traffic + HGV + Slope + Limit + Length,data=Fires, upper.panel = panel.cor, diag.panel = panel.hist)
+``` 
+
+It looks like Fires are correlated with Traffic, HGV and Length. 
+Length and HGV are correlated too so we should take this is account when we will try to fit the model.
+```{r HGV and Length, echo = FALSE}
+Reg1 <- lm(Fires$HGV ~ log(Fires$Length))
+plot(log(Fires$Length), Fires$HGV)
+abline(Reg1)
+```
+
+```{r visualisations, echo = FALSE}
+plot(log(Fires$Traffic), Fires$Fires)
+
+plot(Fires$HGV, Fires$Fires)
+
+plot(Fires$Length, Fires$Fires) #exponential distribution ? 
+
+```
+
+## Regressions attempts 
+Traffic, HGV and Length seem to be significant.
+
+```{r regression with all parameters, echo=FALSE}
+Reg2 <- lm(Fires ~ Traffic + HGV + Slope + Urban + Type + Length + Limit + SlopeType, data=Fires)
+summary(Reg2)
+```
+Doing the regression on only those 3 is in fact not that bad in terms of pvalue. 
+```{r regression with Traffic HGV Length, echo=FALSE}
+Reg3 <- lm(Fires ~ Traffic + HGV + Length, data=Fires)
+summary(Reg3)
+```
+
+Let's look at the residuals. They are not normal at all (QQplot), there is no homoscedasticity, and we have some outliers.
+
+```{r residuals of Reg3, echo=FALSE}
+plot(Reg3)
+```
+
+```{r regression tests, echo=FALSE}
+Reg4 <- lm(Fires ~ log(Traffic) + HGV + Length, data=Fires)
+summary(Reg4)
+plot(Reg4)
+
+Reg5 <- lm(Fires ~ Traffic + HGV + log(Length), data=Fires)
+summary(Reg5)
+plot(Reg5)
+#Reg4 is better
+
+r<-rstandard(Reg5)
+acf(r, lag.max = NULL,
+    type = c("correlation", "covariance", "partial"),
+    plot = TRUE, na.action = na.fail, demean = TRUE)
+pacf(r, lag.max = NULL,
+     plot = TRUE, na.action = na.fail, demean = TRUE)
+```
+
+## Poisson model
+```{r Poisson mean, echo =FALSE}
+mean(Fires$Fires)
+```
+
+```{r Plot things}
+p<-data.frame(rpois(10000,mean(Fires$Fires)))
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.3, lwd=1, bw=0.2)+
+  ggtitle("Poisson model")
+``` 
+
+```{r Poisson model, echo =FALSE}
+m1 <- glm(Fires ~ Length + HGV + Traffic, family="poisson", data=Fires)
+summary(m1)
+plot(m1) #the residuals look terribly bad
+```
+
+```{r}
+m2<- glm(Fires ~ HGV + Traffic, family="poisson", data=Fires)
+summary(m2) #the summary looks pretty cool
+plot(m2) #residuals are still bad
+
+Fires$hat <- predict(m2, type='response')
+Fires <- Fires[with(Fires, order(Traffic, HGV)), ]
+ggplot(Fires, aes(x = HGV, y = hat, colour = Traffic)) +
+  geom_point(aes(y = Fires), alpha=.5, position=position_jitter(h=.2)) +
+  geom_line(size = 1) +
+  labs(x = "HGV", y = "Fires")
+```
+
+## Trying other things that might be bad
+```{r test with gam, echo=FALSE}
+fit.gcv <- gam(Fires~Length-1+s(HGV),data=Fires)
+summary(fit.gcv)
+fit.plot.gcv <- plot(fit.gcv,seWithMean=TRUE,xlab="Length")
+fit.gcv$aic
+```
+
+```{r test with gam 2, echo=FALSE}
+fit.gcv <- gam(Fires~HGV-1+s(HGV),data=Fires)
+summary(fit.gcv)
+fit.plot.gcv <- plot(fit.gcv,seWithMean=TRUE,xlab="HGV")
+fit.gcv$aic
+
+```
+
+```{r with random effects of tunnels}
+#fit.gcv.re <- gam(Fires~s(Tunnel,bs="re")+s(HGV,by=Direction),data=Fires)
+#summary(fit.gcv.re)
+#gam.vcomp(fit.gcv.re)
+#fit.gcv.re$aic
+#plot(fit.gcv.re)
+#plot(residuals(fit.gcv.re))
+```
+
+
