@@ -31,6 +31,18 @@ Accidents %>% group_by(Acc) %>% summarise(number=n()) %>% mutate(freq = number/s
 ```
 comment : the distribution looks like an exponential/poisson distribution, there is one obvious outlier (Acc>80), and some possible outliers (at 50)
 
+Let's try to fit an exponential ditribution.
+```{r , echo=FALSE}
+mean(Accidents$Acc) #to fit the exponential model
+
+p<-data.frame(rexp(100,0.25))
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.5, lwd=1, bw=0.5)+
+  ggtitle("exp(0.25)")
+```
+
+
 Traffic vs Accidents
 ```{r , echo=FALSE}
 plot(Accidents$Traffic, Accidents$Acc)
@@ -168,8 +180,9 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
 pairs(~ Acc + Traffic + HGV + Slope + Limit + Length + Width + Lanes,data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist)
 #categorical variables  ?
 ```
+It looks like the Accidents are mostly correlated with Lanes and Traffic. However Lanes is correlated with Length, Traffic and HGV.
 
-## Model building
+## Some first models
 Linear regression with all the variables 
 
 ```{r, echo=FALSE}
@@ -178,6 +191,7 @@ summary(Reg)
 par(mfrow=c(2,2))
 plot(Reg)
 ```
+
 
 Without tunnel and company
 ```{r, echo=FALSE}
@@ -229,6 +243,36 @@ Reg6 <- lm(log(Acc+1) ~ Traffic + Limit
 summary(Reg6)
 ```
 
+## Fitting a Poisson model ? 
+The summary is quite excellent but the QQplot is skewed. 
+```{r, echo=FALSE}
+m1 <- glm(Acc ~ Lanes + Traffic, family="poisson", data=Accidents)
+summary(m1)
+plot(m1) #the residuals look terribly bad
+
+m1$aic
+``` 
+
+## Fitting an exponential model
+The summary shows a clear effect of Traffic but Lanes is not significant. The QQplot shows skewed residuals. 
+```{r, echo=FALSE}
+m2 <- glm((Acc+1) ~ Lanes + Traffic, family=Gamma(link='log'), data=Accidents)
+summary(m2)
+plot(m2) #the residuals look terribly bad
+
+m2$aic
+``` 
+
+```{r, echo=FALSE}
+m3 <- glm((Acc+1) ~ Traffic, family=Gamma(link='log'), data=Accidents)
+summary(m3)
+plot(m3) #the residuals look terribly bad
+
+m3$aic
+
+plot(log(residuals(m3)))
+``` 
+
 ## AIC selection 
 ```{r, echo=FALSE}
 nullmodel <- lm(Acc ~ 1, data = Accidents)
@@ -255,12 +299,10 @@ BIC(model.step)
 
 they all give the model fitted with tunnel, year and lanes. the AIC and BIC aren't that different
 
-## With dummies ? 
-```{r, echo=FALSE}
-install.packages(c("fastDummies", "recipes"))
-library('fastDummies')
-datadummies <- dummy_cols(Accidents, select_columns = c('Tunnel', 'Company', 'SlopeType', 'Direction', 'Year'))
-Reg7 <- lm(Acc ~ ., data=datadummies)
-summary(Reg7)
-plot(Reg7)
-```
+
+## other  
+```{r}
+
+
+``` 
+
