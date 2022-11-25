@@ -146,10 +146,12 @@ plot(Reg9)
 ```
 
 ## Poisson model
+First, I look at the mean to find the parameter.
 ```{r Poisson mean, echo =FALSE}
 mean(Fires$Fires)
 ```
 
+Then I plot the distribution and look at how it looks.
 ```{r Plot things}
 p<-data.frame(rpois(10000,mean(Fires$Fires)))
 ggplot(p,aes(x=p[,1]))+
@@ -158,16 +160,21 @@ ggplot(p,aes(x=p[,1]))+
   ggtitle("Poisson model")
 ``` 
 
+Trying to fit a Poisson model. The summary looks not so bad but the residuals are clearly not normal and there are some outliers. 
 ```{r Poisson model, echo =FALSE}
 m1 <- glm(Fires ~ Length + HGV + Traffic, family="poisson", data=Fires)
 summary(m1)
 plot(m1) #the residuals look terribly bad
-```
 
+m1$aic
+```
+Second Poisson model : the summary is way better, I tried to plot the prediction but I am not sure I have understood what it does. Also the residuals look worse. The aic is slightly bigger. 
 ```{r}
 m2<- glm(Fires ~ HGV + Traffic, family="poisson", data=Fires)
 summary(m2) #the summary looks pretty cool
 plot(m2) #residuals are still bad
+
+m2$aic
 
 Fires$hat <- predict(m2, type='response')
 Fires <- Fires[with(Fires, order(Traffic, HGV)), ]
@@ -175,6 +182,38 @@ ggplot(Fires, aes(x = HGV, y = hat, colour = Traffic)) +
   geom_point(aes(y = Fires), alpha=.5, position=position_jitter(h=.2)) +
   geom_line(size = 1) +
   labs(x = "HGV", y = "Fires")
+```
+## Variable selection ? 
+I think this part is not useful but anyway I let it.
+```{r}
+nullmodel <- lm(Fires ~ 1, data = Fires)
+fullmodel <- lm(Fires ~ ., data = Fires)
+```
+
+Forward selection
+```{r}
+model.step.f <- step(nullmodel, scope = list(lower = nullmodel, upper = fullmodel), direction = 'forward')
+``` 
+
+Backward elimination
+```{r}
+model.step.b <- step(fullmodel, direction = 'backward')
+``` 
+
+Stepwise selection
+```{r}
+model.step <- step(nullmodel, scope = list(lower = nullmodel, upper = fullmodel), direction = 'both')
+``` 
+
+
+AICs and BICs
+```{r}
+AIC(model.step.f)
+BIC(model.step.f)
+AIC(model.step.b)
+BIC(model.step.b)
+AIC(model.step)
+BIC(model.step)
 ```
 
 ## Trying other things that might be bad
@@ -201,5 +240,14 @@ fit.gcv$aic
 #plot(fit.gcv.re)
 #plot(residuals(fit.gcv.re))
 ```
+
+## Conlusion
+I think that the best model is the Poisson model even though I am not sure it is very good. I am very bad at interpreting the residuals so if you are better at it it would help ! The Fires distribution clearly looks Poisson for me, so that's why I tried to fit a Poisson model.\
+I don't know how to add the Tunnel and company to the model to make it be really interesting. \
+I tried to fit things with gam like in the exercises sessions but again I am not an expert and I may have done useless things !
+
+
+
+
 
 
