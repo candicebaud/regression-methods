@@ -116,6 +116,34 @@ acf(r, lag.max = NULL,
 pacf(r, lag.max = NULL,
      plot = TRUE, na.action = na.fail, demean = TRUE)
 ```
+## Econometric approach
+We try to look at the effect of HGV in our model. First we regress HGV on Length, the residuals will then capture the pure effect of HGV (because the effect of Length on HGV is already expressed in the betaOLS). So then, I regress Fires on the residuals. The result is that HGV is not that significant. 
+```{r Econometric approach}
+Reg6 <- lm(HGV ~ Length, data = Fires)
+summary(Reg6)
+
+r <- residuals(Reg6)
+plot(r)
+
+#by regressing on the residual, we can eliminate the effect of HGV on Length and keep only the effect of Length
+Reg7 <- lm(Fires ~r, data=Fires)
+summary(Reg7)
+plot(Reg7)
+```
+
+By doing it the other way around, we can capture the effect of Length on Fires. It appears to have a greater effect than HGV. However, it is still limited. The thing that appears clearly is the fact that HGV and Length have a strong correlation.
+
+```{r Econometric approach 2}
+Reg8 <- lm(Length ~ HGV, data = Fires)
+summary(Reg8)
+
+r <- residuals(Reg8)
+plot(r)
+
+Reg9 <- lm(Fires ~ r, data=Fires)
+summary(Reg9)
+plot(Reg9)
+```
 
 ## Poisson model
 ```{r Poisson mean, echo =FALSE}
