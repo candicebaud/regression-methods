@@ -42,20 +42,88 @@ ggplot(p,aes(x=p[,1]))+
   ggtitle("exp(0.25)")
 ```
 
+Correlations
+```{r , echo=FALSE}
+## Plot of covariates against each other to look at dependencies (slide 55)
+#numerical variables 
+panel.hist <- function(x, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+}
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+
+#numerical variables
+pairs(~ Acc + Traffic + HGV + Slope + Limit + Length + Width + Lanes,data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist)
+#categorical variables  ?
+```
+
+It looks like the Accidents are mostly correlated with Lanes and Traffic but also HGV and Limit. However Lanes is correlated with Length, Traffic and HGV.
 
 Traffic vs Accidents
 ```{r , echo=FALSE}
 plot(Accidents$Traffic, Accidents$Acc)
 ```
-comment: some extreme values after 1.2 e+08 in Traffic and at 80 in Acc
+comment: some extreme values after 1.2 e+08 in Traffic and at 80 in Acc\
 
+Linear model between Traffic and Accidents. No homoscedasticity, R squared is not that good, but the coefficients are significant. 
+```{r}
+lm.traffic <- lm(Acc ~ Traffic, data=Accidents)
+summary(lm.traffic)
+plot(Accidents$Traffic, Accidents$Acc)
+abline(lm.traffic)
+
+plot(residuals(lm.traffic), fitted(lm.traffic)) 
+``` 
+Log scale may be more appropriate. When I plot, the distribution doesn't look linear at all. The coefficients are significative but the residuals are not homoscedastic.
+
+```{r}
+lm.log.traffic <- lm(Acc ~ log(Traffic), data=Accidents)
+summary(lm.log.traffic)
+
+plot(log(Accidents$Traffic), Accidents$Acc)
+abline(lm.log.traffic)
+
+plot(residuals(lm.log.traffic), fitted(lm.log.traffic))
+```
+Below I plot Accidents vs HGV and Accidents vs log(HGV)
 ```{r , echo=FALSE}
 plot(Accidents$HGV, Accidents$Acc)
+plot(log(Accidents$HGV), Accidents$Acc)
 ```
 comment : some extreme values of HGV at 0.6?, looks like an exponential distribution 
 
+The linear models don't look good neither with HGV nor with log(HGV)
+```{r HGV}
+lm.HGV <- lm(Acc ~ HGV, data=Accidents)
+summary(lm.HGV)
+plot(Accidents$HGV, Accidents$Acc)
+abline(lm.HGV)
+
+lm.log.HGV<- lm(Acc ~ log(HGV+1), data=Accidents)
+summary(lm.log.HGV)
+plot(log(Accidents$HGV), Accidents$Acc)
+abline(lm.log.HGV)
+``` 
+
+
 Some models I tried but I am not convinced 
-```{r , echo=FALSE}
+```{r Slope, echo=FALSE}
 plot(Accidents$Slope,Accidents$Acc)
 #comment : looks almost normal, big concentration at 0 where there are greater number of accidents 
 hist(Accidents$Slope)
@@ -150,38 +218,6 @@ Accidents%>%group_by(Company, Acc)%>% summarise(number=n())%>%mutate(nb_acc=numb
 #comment : big differences between the different companies, very heterogeneous
 ```
 
-Correlations
-```{r , echo=FALSE}
-## Plot of covariates against each other to look at dependencies (slide 55)
-#numerical variables 
-panel.hist <- function(x, ...)
-{
-  usr <- par("usr"); on.exit(par(usr))
-  par(usr = c(usr[1:2], 0, 1.5) )
-  h <- hist(x, plot = FALSE)
-  breaks <- h$breaks; nB <- length(breaks)
-  y <- h$counts; y <- y/max(y)
-  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
-}
-
-panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
-{
-  usr <- par("usr"); on.exit(par(usr))
-  par(usr = c(0, 1, 0, 1))
-  r <- abs(cor(x, y))
-  txt <- format(c(r, 0.123456789), digits = digits)[1]
-  txt <- paste0(prefix, txt)
-  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
-  text(0.5, 0.5, txt, cex = cex.cor * r)
-}
-
-
-#numerical variables
-pairs(~ Acc + Traffic + HGV + Slope + Limit + Length + Width + Lanes,data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist)
-#categorical variables  ?
-```
-It looks like the Accidents are mostly correlated with Lanes and Traffic. However Lanes is correlated with Length, Traffic and HGV.
-
 ## Some first models
 Linear regression with all the variables 
 
@@ -243,15 +279,42 @@ Reg6 <- lm(log(Acc+1) ~ Traffic + Limit
 summary(Reg6)
 ```
 
+
+## Mixed models  
+The idea here would be to consider random and fixed effects :\
+  *random : tunnel, company, year, 
+  *fixed : Traffic, Lanes, Width, Type, Length, Limit, Slope\
+  
+
+Trying to cluster by tunnel : the idea is that the tunnels have random effects whereas the Traffic and Lanes are fixed effects. I don't really understand the models below, I don't know how to interpret.
+```{r Mixed model Lanes and log(Traffic) by Tunnel}
+library('lme4')
+summary(lmer(Acc ~ log(Traffic) + Lanes + Width + Type + log(Length) + Limit + Slope + (1 | Tunnel), data = Accidents))
+``` 
+
+```{r mixed model by company}
+library('lme4')
+summary(lmer(Acc ~ log(Traffic) + Lanes + Width + Type + log(Length) + Limit + Slope + (1 | Company), data = Accidents))
+``` 
+
+```{r Nested effects test}
+summary( aov(Acc ~ Traffic/Tunnel, data=Accidents) )
+summary( aov(Acc ~ Traffic + Tunnel, data=Accidents) )
+
+summary( aov(Acc ~ Traffic/Company, data=Accidents) )
+``` 
+
+
 ## Fitting a Poisson model ? 
 The summary is quite excellent but the QQplot is skewed. 
 ```{r, echo=FALSE}
 m1 <- glm(Acc ~ Lanes + Traffic, family="poisson", data=Accidents)
 summary(m1)
-plot(m1) #the residuals look terribly bad
+plot(m1) #the residuals look bad
 
 m1$aic
 ``` 
+
 
 ## Fitting an exponential model
 The summary shows a clear effect of Traffic but Lanes is not significant. The QQplot shows skewed residuals. 
@@ -300,9 +363,6 @@ BIC(model.step)
 they all give the model fitted with tunnel, year and lanes. the AIC and BIC aren't that different
 
 
-## other  
-```{r}
 
 
-``` 
 
