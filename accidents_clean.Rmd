@@ -179,7 +179,7 @@ The idea here would be to consider random and fixed effects on the variables tha
   *random : Tunnel, Company, Year(optionnal), 
   *fixed : log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width\
 
-WARNING below are not exponential 
+
 First, we put Tunnel as the random effect
   
 ```{r Mixed model, echo=FALSE}
@@ -201,5 +201,6 @@ library('lme4')
 summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Year), family=Gamma(link='log'), data = Accidents))
 ``` 
 
+*Mixed models with multiple random effects*
 
 
