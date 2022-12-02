@@ -9,22 +9,114 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r Packages, echo=FALSE, include = FALSE}
+lapply(c("dplyr","chron","ggplot2","tidyr","questionr","survival","forcats",
+         "data.table","table1","lubridate", "ggpubr","viridis","finalfit",
+         "ggpubr", "ggthemes", "gridExtra", "tidyverse", "rstatix","ggsci",
+         "wesanderson","kableExtra", "naniar","boot","scales","psych","ggcorrplot","ggradar", "caret", "gam"), 
+       library, character.only=TRUE)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+Sys.setlocale("LC_TIME", "English")
+setwd("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project")
+load("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project/Fires.RData")
 ```
 
-## Including Plots
+## Introduction
+This report describes an analysis of the database "Accidents", in which the data was simulated based on a real dataset of events in French motorway tunnels. Here, we focus on modelling the accidents.
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+## Exploration 
+First, let's look at the data and try to fit a model to our data distribution. 
+
+```{r Accidents, echo=FALSE}
+p<-data.frame(rpois(10000,mean(Fires$Fires)))
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.3, lwd=1, bw=0.3)+
+  ggtitle("poisson")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+To fit a model, let's look at the correlations between the different variables and their distributions. This will enable us to understand better how they are possibly linked. 
+
+```{r , echo=FALSE}
+## Plot of covariates against each other to look at dependencies (slide 55)
+#numerical variables 
+panel.hist <- function(x, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+}
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+
+#numerical variables
+pairs(~ Fires + Traffic + HGV + Slope + Limit + Length, data=Fires, upper.panel = panel.cor, diag.panel = panel.hist)
+```
+It looks like Fires are correlated with Traffic, HGV and Length. \
+Length and HGV are correlated too so we should take this is account when we will try to fit the model.
+
+
+## Model 
+*Variable selection for linear model*
+The first naive way to do it is to do a backward elimination on all the variables. But it gives a model based on companies and tunnel mainly, which is not a true model. Indeed, those effects are random. So, we do the backward elimination without those variables. 
+
+```{r AIC and BIC, echo=FALSE}
+fullmodel <- lm(Fires ~ log(Traffic) + HGV + Slope + Limit+ log(Length) + Direction + Urban + Type + Length + Traffic, data = Fires)
+
+# Backward elimination
+model.step.b <- step(fullmodel, direction = 'backward')
+
+```
+```{r regression, echo=FALSE}
+summary(model.step.b)
+par(mfrow=c(2,2)) 
+plot(model.step.b)
+```
+The multiple R squared is not that good and the Slope coefficient is not significant. This might not be the best model at all. The distribution was close to a poisson, so let's try to fit poisson models.
+
+*Poisson model*
+First, as previously, I do a variable selection based on the AIC and BIC. 
+```{r selection, echo =FALSE}
+fullmodel <- glm(Fires ~ log(Traffic) + HGV + Slope + Limit+ log(Length) + Direction + Urban + Type + Length + Traffic, family="poisson", data=Fires)
+model <- step(fullmodel, direction = 'backward')
+``` 
+
+The final model is the following one : 
+```{r poisson model, echo =FALSE}
+summary(model)
+
+par(mfrow=c(2,2)) 
+plot(model)
+
+```
+This model can probably be improved since some coefficients are not significant. Let's try to see if we can improve the model. 
+
+```{r better model, echo=FALSE}
+m2 <- glm(Fires ~ log(Traffic) + HGV + log(Length), family="poisson", data=Fires)
+summary(m2)
+
+par(mfrow=c(2,2)) 
+plot(model)
+``` 
+
+*Random effects*
+to do 
+
+
+
+
+
