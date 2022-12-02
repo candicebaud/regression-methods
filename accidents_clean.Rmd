@@ -1,0 +1,204 @@
+---
+title: "Accidents - Regression methods"
+author: "candice"
+date: "2022-12-02"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, include=FALSE, echo=FALSE}
+lapply(c("dplyr","chron","ggplot2","tidyr","questionr","survival","forcats",
+         "data.table","table1","lubridate", "ggpubr","viridis","finalfit",
+         "ggpubr", "ggthemes", "gridExtra", "tidyverse", "rstatix","ggsci",
+         "wesanderson","kableExtra",
+         "naniar","boot","scales","psych","ggcorrplot","ggradar", 
+         "caret"), 
+       library, character.only=TRUE)
+
+Sys.setlocale("LC_TIME", "English")
+setwd("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project")
+load("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project/Accidents.RData")
+
+```
+
+## Introduction
+This report describes an analysis of the database "Accidents", in which the data was simulated based on a real dataset of events in French motorway tunnels. Here, we focus on modelling the accidents.
+
+
+## Exploratory on numerical variables
+First, let's look at the data and try to fit a model to our data distribution. 
+
+```{r Accidents, echo=FALSE}
+p<-data.frame(rexp(100,1/mean(Accidents$Acc)))
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.5, lwd=1, bw=0.5)+
+  ggtitle("exp(0.25)")
+```
+
+To fit a model, let's look at the correlations between the different variables and their distributions. This will enable us to understand better how they are possibly linked. 
+
+```{r , echo=FALSE}
+## Plot of covariates against each other to look at dependencies (slide 55)
+#numerical variables 
+panel.hist <- function(x, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+}
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+
+#numerical variables
+pairs(~ Acc + Traffic + HGV + Slope + Limit + Length + Width + Lanes, data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist)
+```
+
+It looks like the Accidents are mostly correlated with Lanes and Traffic but also HGV and Limit. However Lanes is correlated with Length, Traffic and HGV. \
+The values of Traffic are quite big so we perform a linear regression of Accidents on Traffic. 
+
+```{r linear regression, echo=FALSE}
+lm.log.traffic <- lm(Acc ~ log(Traffic), data=Accidents)
+summary(lm.log.traffic)
+
+par(mfrow=c(1,2)) 
+plot(log(Accidents$Traffic), Accidents$Acc)
+abline(lm.log.traffic)
+
+plot(residuals(lm.log.traffic), fitted(lm.log.traffic))
+```
+
+The R squared shows that Traffic is not sufficient to explain the number of accidents, but the p-value indicates that Traffic is significative. The residuals are not homoscedastic, nor normally distributed. 
+
+
+## Exploratory on categorical variables
+Let's look at lanes. With a rapid plot(not visible here), it seems like having two lanes is the case that creates most accidents. Below, I fit a linear regression. 
+
+```{r lanes, echo=FALSE}
+
+#Accidents %>% group_by(Lanes, Acc)%>% summarise(number=n())%>% mutate(nb_acc = number*Acc) %>%ggplot(aes(x=Lanes, y=nb_acc)) + geom_bar(stat = 'identity')
+
+LinReg <- lm(Acc ~ Lanes, data=Accidents)
+plot(Accidents$Lanes, Accidents$Acc,bg="red")
+abline(LinReg, lwd=3, col="blue")
+```
+Let's look at year. There is a net increase of accidents in 2007 compared to before. It still increases in 2008 and then stabilizes. 
+```{r year, echo=FALSE}
+Accidents%>% group_by(Year, Acc)%>% summarise(number=n())%>% mutate(nb_acc = number*Acc) %>%
+  ggplot(aes(x=Year, y=nb_acc)) + geom_bar(stat = 'identity')
+```
+
+Let's look at the Urban variable. We can see that most accidents occurr in an urban environment. 
+```{r urban, echo=FALSE}
+Accidents%>%group_by(Urban, Acc)%>% summarise(number=n())%>%mutate(nb_acc=number*Acc)%>% 
+  ggplot(aes(x=Urban, y=nb_acc)) + geom_bar(stat='identity')
+```
+
+Let's look at the slope types. There is missing data which will probably need some further analysis.  
+```{r slope type, echo=FALSE}
+Accidents%>%group_by(SlopeType, Acc)%>% summarise(number=n())%>%mutate(nb_acc=number*Acc)%>% 
+  ggplot(aes(x=SlopeType, y=nb_acc)) + geom_bar(stat='identity')
+```
+
+Finally, by looking at the companies and tunnels, one can see an enormous heterogeneity. 
+```{r companies and tunnels, echo=FALSE}
+Accidents%>%group_by(Company, Acc)%>% summarise(number=n())%>%mutate(nb_acc=number*Acc)%>% 
+  ggplot(aes(x=Company, y=nb_acc)) + geom_bar(stat='identity')
+
+Accidents%>%group_by(Tunnel, Acc)%>% summarise(number=n())%>%mutate(nb_acc=number*Acc)%>% 
+  ggplot(aes(x=Tunnel, y=nb_acc)) + geom_bar(stat='identity')
+```
+
+
+Conclusions of our exploratory analysis : \
+  *It would probably make sense to consider tunnel and companies as random \
+  
+  *It would maybe be needed to consider two different models depending on the years we are considering\
+  
+  *Numerical variables that look the most helpful to build the model are Traffic, Lanes, HGV and Limit
+  
+  
+## Model 
+*Variable selection for linear model*
+The first naive way to do it is to do a backward elimination on all the variables. But it gives a model based on companies and tunnel mainly, which is not a true model. Indeed, those effects are random. So, we do the backward elimination without those variables. 
+
+```{r AIC and BIC, echo=FALSE}
+fullmodel <- lm(Acc ~ Direction + Limit + Width + Urban + HGV + log(Traffic) + log(Length) + Type + SlopeType, data = Accidents)
+
+# Backward elimination
+model.step.b <- step(fullmodel, direction = 'backward')
+
+# AIC and BIC
+AIC(model.step.b)
+BIC(model.step.b)
+```
+The final model is then the one with HGV, Limit, Width, Type, log(Length), Traffic, and SlopeType. Let's look at this model \
+```{r regression, echo=FALSE}
+summary(model.step.b)
+par(mfrow=c(2,2)) 
+plot(model.step.b)
+```
+The adjusted R squared is not that bad, but some coefficients are not completely significant. Traffic and log(Length) are extremely significant, as well as Type, Width and Limit. The SlopeType needs further investigation. 
+\
+Overall, the linear model is not completely satisfying. In the next section, I try to fit some exponential models.
+
+*Exponential model*
+To build the model, I started with the full model and then I did backward elimination. I get this result with the best model. 
+
+```{r exp model backward elimination, echo=FALSE}
+fullmodel <- glm((Acc+1) ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes, family=Gamma(link='log'), data=Accidents)
+model <- step(fullmodel, direction = 'backward')
+```
+
+```{r exp model, echo=FALSE}
+summary(model)
+```
+This model gives coefficients a better overall result. \
+This would be the best exponential model without taking in account the random effects. The next section is about how to fit an exponential model with random effects. \
+
+*Exponential model with random effects*
+The idea here would be to consider random and fixed effects on the variables that were significant previously :\
+  *random : Tunnel, Company, Year(optionnal), 
+  *fixed : log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width\
+
+First, we put Tunnel as the random effect
+  
+```{r Mixed model, echo=FALSE}
+library('lme4')
+summary(lmer(Acc ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Tunnel ), data = Accidents))
+``` 
+
+Then we put Company as the random effect. 
+
+```{r mixed model by company, echo=FALSE}
+library('lme4')
+summary(lmer(Acc ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Company), data = Accidents))
+``` 
+
+Finally, I put year as the random effect
+
+```{r mixed model by year, echo=FALSE}
+library('lme4')
+summary(lmer(Acc ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Year), data = Accidents))
+``` 
+
+
+
