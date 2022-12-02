@@ -179,25 +179,26 @@ The idea here would be to consider random and fixed effects on the variables tha
   *random : Tunnel, Company, Year(optionnal), 
   *fixed : log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width\
 
+WARNING below are not exponential 
 First, we put Tunnel as the random effect
   
 ```{r Mixed model, echo=FALSE}
 library('lme4')
-summary(lmer(Acc ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Tunnel ), data = Accidents))
+summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Tunnel ), family=Gamma(link='log'),data = Accidents))
 ``` 
 
 Then we put Company as the random effect. 
 
 ```{r mixed model by company, echo=FALSE}
 library('lme4')
-summary(lmer(Acc ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Company), data = Accidents))
+summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Company), family=Gamma(link='log'), data = Accidents))
 ``` 
 
 Finally, I put year as the random effect
 
 ```{r mixed model by year, echo=FALSE}
 library('lme4')
-summary(lmer(Acc ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Year), data = Accidents))
+summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Year), family=Gamma(link='log'), data = Accidents))
 ``` 
 
 

@@ -114,7 +114,21 @@ plot(model)
 ``` 
 
 *Random effects*
-to do 
+The idea here would be to consider random and fixed effects on the variables that were significant previously :\
+  *random : Tunnel, Company, 
+  *fixed : log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width\
+
+First, we put Tunnel as the random effect
+  
+```{r Mixed model tunnel, echo=FALSE}
+library('lme4')
+summary(glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Tunnel ), data = Fires, family=poisson))
+``` 
+Then with company
+```{r Mixed model company, echo=FALSE}
+library('lme4')
+summary(glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Company ), data = Fires, family=poisson))
+``` 
 
 
 
