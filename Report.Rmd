@@ -1,12 +1,14 @@
 ---
 title: "Project Regression Methods - 2022"
-author: "Céline Guex - sciper n°310673"
+author: "Céline Guex - sciper n°310673, Baud Candice - sciper n°359523"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
-  pdf_document :
-      number_sections: TRUE
+  html_document:
+    df_print: paged
   includes:
-      in_header: Preamble.tex
+    in_header: Preamble.tex
+  pdf_document:
+    number_sections: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -26,12 +28,66 @@ Fi$Limit <- as.factor(Fi$Limit)
 Fi$SlopeType <- as.factor(Fi$SlopeType)
 Fi$Tunnel <- as.factor(Fi$Tunnel)
 Fi$Company <- as.factor(Fi$Company)
+Ac<- Accidents
+
 ```
+
+# Introduction - Summary
+This report describes the analysis of three databases on events in French motorway tunnels. \
+The data shows ... to do after our analysis.
+
 
 
 # Initial data analysis
-
 ## Description of Fires dataset
 
-This data set lists fires that occurred in French tunnels. The data set gather `r n_distinct(Fi$Tunnel)` tunnels ran by `r n_distinct(Fi$Company)` companies. Many parameters are also registered, like  traffic, proportion of trucks among tunnel's users (in %), length of the tunnel, maximum speed allowed, inclination of the slope in the tunnel (in %), shape of the tunnel (type of slope in the tunnel) and situation of the tunnel (if it is in urban area or not). Some tunnels are unidirectional and some are bidirectional.
+This data set lists fires that occurred in French tunnels. The data set gathers `r n_distinct(Fi$Tunnel)` tunnels ran by `r n_distinct(Fi$Company)` companies. Many parameters are also registered, like  traffic, proportion of trucks among tunnel's users (in %), length of the tunnel, maximum speed allowed,slope inclination in the tunnel (in %), shape of the tunnel (slope type in the tunnel) and situation of the tunnel (if it is in urban area or not). Some tunnels are unidirectional and some are bidirectional.
 We will use this data set to determine the factors that are the most likely to yields to fires in tunnel. We will also look for factors that might reduce the risk of fires.
+
+## Description of Accidents dataset
+The accidents dataset gathers contains `r n_distinct(Ac$Tunnel)` tunnels ran by `r n_distinct(Ac$Company)` companies. The variables from the dataset Fires are also present in the Accidents one. But the latter also includes the Year in which the accidents occurred, the width of lanes in the tunnel in metres (variable Width) and the number of lanes in the tunnel (variable Lanes). 
+
+
+# Model fitting
+Explain the algorithm that enables us to reject the hypothesis that the model is Poisson or exp ?\
+
+## Fires
+We try to fit to the data a Poisson model. 
+
+*Poisson model*
+```{r selection, echo =FALSE, include = FALSE}
+fullmodel <- glm(Fires ~ log(Traffic) + HGV + Slope + Limit+ log(Length) + Direction + Urban + Type + Length + Traffic, family="poisson", data=Fires)
+model <- step(fullmodel, direction = 'backward')
+``` 
+
+```{r better model, echo=FALSE}
+m2 <- glm(Fires ~ log(Traffic) + HGV + log(Length), family="poisson", data=Fires)
+summary(m2)
+
+par(mfrow=c(2,2)) 
+plot(model)
+```
+
+*Poisson mixed model*
+With tunnel as the random effect 
+```{r Mixed model tunnel, echo=FALSE}
+library('lme4')
+summary(glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Tunnel ), data = Fires, family=poisson))
+```
+
+Then with company
+```{r Mixed model company, echo=FALSE}
+library('lme4')
+summary(glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Company ), data = Fires, family=poisson))
+``` 
+
+## Accidents
+
+
+# Discussion 
+
+
+# References 
+
+
+
