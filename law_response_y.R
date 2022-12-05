@@ -11,7 +11,7 @@ load("Data/Accidents.RData")
 load("Data/Breakdowns.RData")
 
 set.seed(517)
-# Functions ---------------------------------------------------------------
+# Poisson ---------------------------------------------------------------
 MLE_poi <- function(xn){ #Compute MLE of a sample x1,...xn ~ Poi(lambda) (iid)
   return(mean(xn))
 }
@@ -46,23 +46,63 @@ Param_bootstrap_poi <- function(xn, Bboot = 10000){
   
 }
 
+
+# Exponential -------------------------------------------------------------
+MLE_expo <- function(xn){ #Compute MLE of a sample x1,...xn ~ exp(lambda) (iid)
+  return(length(xn)/sum(xn))
+}
+
+Param_bootstrap_expo <- function(xn, Bboot = 10000){
+  #Compute MLE of sample xn
+  n = length(xn)
+  lambda <- MLE_expo(xn)
+  
+  #Bootstrap procedure
+  Tb <- rep(NA,Bboot)
+  for (b in 1:Bboot){
+    #Generate sample from approximate candidate law Poi(lambda)
+    xb_star <- rexp(n,lambda)
+    #Estimate MLE of the sample
+    lambda_b_star <- MLE_expo(xb_star)
+    #Compute EDF
+    F_Nb <- ecdf(xb_star)
+    #Compute absolute difference
+    grid <- 1:100
+    difabs <- abs(F_Nb(grid)-pexp(grid,lambda_b_star))
+    #Store result
+    Tb[b]<-max(difabs)
+    
+    # plot(F_Nb)
+    # points(grid,ppois(grid,lambda_b_star), type="l", color="red")
+  }
+  # plot(density(Tb))
+  # abline(quantile(Tb,0.95))
+  #Take 95-quantile
+  return(quantile(Tb,0.95))
+}
+
+
+
 # Dataset Fire ------------------------------------------------------------
 yf <- Fires$Fires
 syf<- Param_bootstrap_poi(yf)
+expyf <- Param_bootstrap_expo(yf)
 
 # Dataset Accident --------------------------------------------------------
 ya <- Accidents$Acc
 sya <- Param_bootstrap_poi(ya)
+expya <- Param_bootstrap_expo(ya)
 
 # Dataset Breakdowns ------------------------------------------------------
 yb <- Breakdowns$Breakdowns
 syb <- Param_bootstrap_poi(yb)
+expyb <- Param_bootstrap_expo(yb)
 
 
-# Tests -------------------------------------------------------------------
+# Tests Poisson -------------------------------------------------------------------
 # Here, we expect quite small differences if we take a sample of the Poisson 
-# distribution and small differences if we take an other distribution. 
-# Thus, a large output value means that we don't avec the same distribution and 
+# distribution and big differences if we take an other distribution. 
+# Thus, a large output value means that we don't have the same distribution and 
 # a small value means that we have no evidence against the fact that the sample
 # follows a law of Poisson.
 
@@ -81,3 +121,13 @@ syb <- Param_bootstrap_poi(yb)
 # # Test 4
 # s4 <- rexp(100)
 # r4 <- Param_bootstrap_poi(s4)
+
+# Tests Exponential -------------------------------------------------------
+# #Test 1
+#e1 <- rexp(100, 1)
+#res1 <- Param_bootstrap_expo(s1)
+
+
+# #Test 2 
+#e2 <- rexp(100, 4)
+#res2 <- Param_bootstrap_expo(s2)
