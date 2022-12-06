@@ -1,14 +1,14 @@
 ---
 title: "Project Regression Methods - 2022"
-author: "Céline Guex - sciper n°310673, Baud Candice - sciper n°359523"
+author: "Céline Guex - sciper n°310673, Candice Baud - sciper n°359523"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
-  html_document:
-    df_print: paged
-  includes:
-    in_header: Preamble.tex
   pdf_document:
     number_sections: yes
+  includes:
+    in_header: Preamble.tex
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -41,7 +41,7 @@ The data shows ... to do after our analysis.
 # Initial data analysis
 ## Description of Fires dataset
 
-This data set lists fires that occurred in French tunnels. The data set gathers `r n_distinct(Fi$Tunnel)` tunnels ran by `r n_distinct(Fi$Company)` companies. Many parameters are also registered, like  traffic, proportion of trucks among tunnel's users (in %), length of the tunnel, maximum speed allowed,slope inclination in the tunnel (in %), shape of the tunnel (slope type in the tunnel) and situation of the tunnel (if it is in urban area or not). Some tunnels are unidirectional and some are bidirectional.
+This data set lists fires that occurred in French tunnels. The data set gathers `r n_distinct(Fi$Tunnel)` tunnels ran by `r n_distinct(Fi$Company)` companies. Many parameters are also registered, like  traffic, proportion of trucks among tunnel's users (in %), length of the tunnel, maximum speed allowed,slope inclination in the tunnel (in %), shape of the tunnel (slope type in the tunnel) and situation of the tunnel (if it lies in urban area or not). Some tunnels are unidirectional and some are bidirectional.
 We will use this data set to determine the factors that are the most likely to yields to fires in tunnel. We will also look for factors that might reduce the risk of fires.
 
 ## Description of Accidents dataset
@@ -49,7 +49,10 @@ The accidents dataset gathers contains `r n_distinct(Ac$Tunnel)` tunnels ran by 
 
 
 # Model fitting
-Explain the algorithm that enables us to reject the hypothesis that the model is Poisson or exp ?\
+Explanation of technique to justify our choice of model :
+The principle is quite simple : we use parametric bootstrap to test if the law $F$ of a random sample comes from a certain parametric family $\mathcal{F}=\{F_\theta : \theta \in \Theta\}$, namely we test $H_0:F\in \mathcal{F}$ versus $H_1: F \notin \mathcal{F}$. We proceed by measuring $T= \sup_{x} |\hat{F}_N(x)-F_{\hat{\lambda}}(x)|$ and we hope to have a small $T$ under $H_0$. Details of the algorithm can be found under this link : https://htmlpreview.github.io/?https://raw.githubusercontent.com/TMasak/StatComp/master/Notes/10_Bootstrap.html
+TO DO : change place of link into references
+
 
 ## Fires
 We try to fit to the data a Poisson model. 
