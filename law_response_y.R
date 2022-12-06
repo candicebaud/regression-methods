@@ -3,7 +3,8 @@
 #The procedures discribed below follows from the course MATH-517 : Statistical 
 #Computation and visualisation, slide 22 of week 11 :
 #https://github.com/TMasak/StatComp/blob/master/Slides/11_Bootstrap.pdf
-#The principle is quite simple : --complete here net time
+#The principle is quite simple : we use parametric bootstrap to test if the law
+# of a random sample comes from a certain parametric family.
 
 # Libraries and files -----------------------------------------------------
 load("Data/Fires.RData")
@@ -11,15 +12,28 @@ load("Data/Accidents.RData")
 load("Data/Breakdowns.RData")
 
 set.seed(517)
-# Poisson ---------------------------------------------------------------
+
+# Functions ---------------------------------------------------------------
+# Poisson -----------------------------------------------------------------
 MLE_poi <- function(xn){ #Compute MLE of a sample x1,...xn ~ Poi(lambda) (iid)
   return(mean(xn))
+}
+
+abs_diff_poi <- function(xn, lambda){
+  #Compute EDF
+  F_N <- ecdf(xn)
+  #Compute absolute difference
+  grid<-c(1:100)
+  difabs <- abs(F_N(grid)-ppois(grid,lambda))
+  #Store result
+  return(max(difabs))
 }
 
 Param_bootstrap_poi <- function(xn, Bboot = 10000){
   #Compute MLE of sample xn
   n = length(xn)
   lambda <- MLE_poi(xn)
+  T0 <- abs_diff_poi(xn,lambda)
   
   #Bootstrap procedure
   Tb <- rep(NA,Bboot)
@@ -28,34 +42,34 @@ Param_bootstrap_poi <- function(xn, Bboot = 10000){
     xb_star <- rpois(n,lambda)
     #Estimate MLE of the sample
     lambda_b_star <- MLE_poi(xb_star)
-    #Compute EDF
-    F_Nb <- ecdf(xb_star)
-    #Compute absolute difference
-    grid <- 1:100
-    difabs <- abs(F_Nb(grid)-ppois(grid,lambda_b_star))
-    #Store result
-    Tb[b]<-max(difabs)
     
+    Tb[b]<-abs_diff_poi(xb_star,lambda_b_star)
      # plot(F_Nb)
      # points(grid,ppois(grid,lambda_b_star), type="l", color="red")
   }
-  # plot(density(Tb))
-  # abline(quantile(Tb,0.95))
-  #Take 95-quantile
-  return(quantile(Tb,0.95))
-  
+  return(1/(Bboot+1)*(1 + sum(Tb[(Tb>T0)])))
 }
-
 
 # Exponential -------------------------------------------------------------
 MLE_expo <- function(xn){ #Compute MLE of a sample x1,...xn ~ exp(lambda) (iid)
   return(length(xn)/sum(xn))
 }
 
+abs_diff_exp <- function(xn, lambda){
+  #Compute EDF
+  F_N <- ecdf(xn)
+  #Compute absolute difference
+  grid<-c(1:100)
+  difabs <- abs(F_N(grid)-pexp(grid,lambda))
+  #Store result
+  return(max(difabs))
+}
+
 Param_bootstrap_expo <- function(xn, Bboot = 10000){
   #Compute MLE of sample xn
   n = length(xn)
   lambda <- MLE_expo(xn)
+  T0 <- abs_diff_exp(xn,lambda)
   
   #Bootstrap procedure
   Tb <- rep(NA,Bboot)
@@ -64,21 +78,12 @@ Param_bootstrap_expo <- function(xn, Bboot = 10000){
     xb_star <- rexp(n,lambda)
     #Estimate MLE of the sample
     lambda_b_star <- MLE_expo(xb_star)
-    #Compute EDF
-    F_Nb <- ecdf(xb_star)
-    #Compute absolute difference
-    grid <- 1:100
-    difabs <- abs(F_Nb(grid)-pexp(grid,lambda_b_star))
-    #Store result
-    Tb[b]<-max(difabs)
+    Tb[b]<-abs_diff_exp(xb_star,lambda_b_star)
     
     # plot(F_Nb)
     # points(grid,ppois(grid,lambda_b_star), type="l", color="red")
   }
-  # plot(density(Tb))
-  # abline(quantile(Tb,0.95))
-  #Take 95-quantile
-  return(quantile(Tb,0.95))
+  return(1/(Bboot+1)*(1 + sum(Tb[(Tb>T0)])))
 }
 
 
