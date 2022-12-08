@@ -89,6 +89,12 @@ plot(model.step.b)
 The multiple R squared is not that good and the Slope coefficient is not significant. This might not be the best model at all. The distribution was close to a poisson, so let's try to fit poisson models.
 
 *Poisson model*
+```{r useless, echo=FALSE}
+ggplot(Fires,aes(x=log(Traffic),y=Fires, fill=Tunnel, colour=Tunnel) )+
+        geom_jitter(width=0.25) +
+        geom_boxplot(outlier.alpha = 0, alpha=0.5) 
+```
+
 First, as previously, I do a variable selection based on the AIC and BIC. 
 ```{r selection, echo =FALSE}
 fullmodel <- glm(Fires ~ log(Traffic) + HGV + Slope + Limit+ log(Length) + Direction + Urban + Type + Length + Traffic, family="poisson", data=Fires)
@@ -131,6 +137,14 @@ summary(glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Company ), data = 
 ``` 
 
 
+```{r Mixed model company and tunnel, echo=FALSE}
+library("lme4")
+mixed_model <- glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Company) +(1| Tunnel), data = Fires, family=poisson)
+summary(mixed_model)
+``` 
 
+
+## Prediction 
+In this section we try to do some prediction by splitting in samples. 
 
 

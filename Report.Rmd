@@ -3,17 +3,22 @@ title: "Project Regression Methods - 2022"
 author: "Céline Guex - sciper n°310673, Candice Baud - sciper n°359523"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
-  pdf_document:
-    number_sections: yes
-  includes:
-    in_header: Preamble.tex
   html_document:
     df_print: paged
+  includes:
+    in_header: Preamble.tex
+  pdf_document:
+    number_sections: yes
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(dplyr)
+lapply(c("dplyr","chron","ggplot2","tidyr","questionr","survival","forcats",
+         "data.table","table1","lubridate", "ggpubr","viridis","finalfit",
+         "ggpubr", "ggthemes", "gridExtra", "tidyverse", "rstatix","ggsci",
+         "wesanderson","kableExtra",      "naniar", "boot", "scales", "psych",          "ggcorrplot", "ggradar", "caret", "gam"), 
+       library, character.only=TRUE)
 ```
 
 ```{r loading-data}
@@ -40,9 +45,51 @@ The data shows ... to do after our analysis.
 
 # Initial data analysis
 ## Description of Fires dataset
-
 This data set lists fires that occurred in French tunnels. The data set gathers `r n_distinct(Fi$Tunnel)` tunnels ran by `r n_distinct(Fi$Company)` companies. Many parameters are also registered, like  traffic, proportion of trucks among tunnel's users (in %), length of the tunnel, maximum speed allowed,slope inclination in the tunnel (in %), shape of the tunnel (slope type in the tunnel) and situation of the tunnel (if it lies in urban area or not). Some tunnels are unidirectional and some are bidirectional.
-We will use this data set to determine the factors that are the most likely to yields to fires in tunnel. We will also look for factors that might reduce the risk of fires.
+We will use this data set to determine the factors that are the most likely to yields to fires in tunnel. We will also look for factors that might reduce the risk of fires.\
+
+Figure 1 shows the distribution of the fires with a fitted poisson distribution, and the correlations between the different variables.\
+
+REMARK : I wanted to put them side by side with par but it doesn't seem to work. \
+```{r exploratory, echo=FALSE}
+p<-data.frame(rpois(10000,mean(Fires$Fires)))
+
+panel.hist <- function(x, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+}
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+par(mfrow=c(1,2)) 
+
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.3, lwd=1, bw=0.3)+
+  ggtitle("poisson")
+
+suppressWarnings(pairs(~ Fires + Traffic + HGV + Slope + Limit + Length, data=Fires, upper.panel = panel.cor, diag.panel = panel.hist))
+```
+From the correlation plot, it is clear that the variables that seem to be the most explanatory are Length, HGV and Traffic. Moreover, Length is also strongly correlated with HGV. Finally, Limit is also significatively correlated with HGV. \
+
+REMARK : I was thinking of then plot length with HGV, and LImit with HGV and fit a regression to see a bit how the variables are linked. \
+
+From this exploratory analysis, we will try to fit a Poisson model. \
+REMARK : put some equations as in his report ? or we put them after ?\
 
 ## Description of Accidents dataset
 The accidents dataset gathers contains `r n_distinct(Ac$Tunnel)` tunnels ran by `r n_distinct(Ac$Company)` companies. The variables from the dataset Fires are also present in the Accidents one. But the latter also includes the Year in which the accidents occurred, the width of lanes in the tunnel in metres (variable Width) and the number of lanes in the tunnel (variable Lanes). 
@@ -72,7 +119,11 @@ plot(model)
 ```
 
 *Poisson mixed model*
-With tunnel as the random effect 
+To improve the model, we decide to fit a mixed model. Indeed, by doing some variable selection with AIC or BIC, one always obtain in the end Tunnel and Company due to their heterogeneity. But, it isn't reasonable to consider that Fires depend more on the company or the tunnel itself than paramters that define the tunnel, that is to say the number of lanes, its length ... \
+The idea here is then to consider random and fixed effects on the variables that were significant previously :\
+  *random : Tunnel, Company, 
+  *fixed : log(Traffic), HGV, Urban, Type, log(Length), Limit, SlopeType, Width\
+
 ```{r Mixed model tunnel, echo=FALSE}
 library('lme4')
 summary(glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Tunnel ), data = Fires, family=poisson))
@@ -83,6 +134,15 @@ Then with company
 library('lme4')
 summary(glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Company ), data = Fires, family=poisson))
 ``` 
+
+
+With both
+```{r Mixed model company and tunnel, echo=FALSE}
+library("lme4")
+mixed_model <- glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Company) +(1| Tunnel), data = Fires, family=poisson)
+summary(mixed_model)
+``` 
+
 
 ## Accidents
 

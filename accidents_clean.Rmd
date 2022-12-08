@@ -174,7 +174,9 @@ summary(model)
 This model gives coefficients a better overall result. \
 This would be the best exponential model without taking in account the random effects. The next section is about how to fit an exponential model with random effects. \
 
-*Exponential model with random effects*
+*Exponential model with random effects* \
+REMINDER FOR MYSELF : The models fail to converge which could be due to collinearity... I have to look at it a bit deeper to see what I can do to have a good model. \
+
 The idea here would be to consider random and fixed effects on the variables that were significant previously :\
   *random : Tunnel, Company, Year(optionnal), 
   *fixed : log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width\
@@ -201,6 +203,13 @@ library('lme4')
 summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Year), family=Gamma(link='log'), data = Accidents))
 ``` 
 
-*Mixed models with multiple random effects*
-
-
+*Mixed models with multiple random effects*\
+Below I dropped Urban and SlopeType to avoid multicollinearity but I still have a bad result. I will try below to find a better model, ie to find which covariates to add. 
+```{r mixed model by year and company and tunnel, echo=FALSE}
+summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit  + Width + (1 | Year) + (1|Company) + (1|Tunnel), family=Gamma(link='log'), data = Accidents))
+``` 
+## Trying to fix my mixed models 
+*correlation of the fixed effects*
+```{r correlation of fixed effects, echo = FALSE}
+pairs(~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width, data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist)
+```
