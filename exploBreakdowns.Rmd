@@ -29,11 +29,12 @@ ggplot(Breakdowns, aes(x=Breakdowns))+
 ```{r visu-1}
 
 ggplot(Breakdowns, aes(x=Length, y=Breakdowns,
-                       size = Traffic,  color= Traffic)) +
+                       size = log10(Traffic),
+                       color= log10(Traffic))) +
   geom_point(alpha=0.3)+
   ggtitle("Breakdowns vs traffic")
 
-ggplot(Breakdowns, aes(x=Traffic, y=Breakdowns) ) +
+ggplot(Breakdowns, aes(x=log10(Traffic), y=Breakdowns) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+
   ggtitle("Breakdowns vs traffic")
 
@@ -54,7 +55,7 @@ ggplot(Breakdowns, aes(x=Type))+
   geom_bar()+
   ggtitle("Repartition of tunnels")
 
-ggplot(Breakdowns, aes(x=HGV,y=Traffic))+
+ggplot(Breakdowns, aes(x=HGV,y=log10(Traffic)))+
   geom_point()+
   ggtitle("Traffic VS HGV")
 
@@ -82,7 +83,7 @@ ggplot(Breakdowns, aes(x=Breakdowns, fill=SlopeType))+
   geom_bar(position = "fill")+
   ggtitle("Breakdowns by SlopeType")
 
-ggplot(Breakdowns, aes(x=Traffic, y=Breakdowns, shape=SlopeType))+
+ggplot(Breakdowns, aes(x=log10(Traffic), y=Breakdowns, shape=SlopeType))+
   geom_point()+
   facet_grid(~SlopeType)+
   ggtitle("Breakdowns VS Traffic, by Slope type")
@@ -93,10 +94,24 @@ ggplot(Breakdowns, aes(x= Slope,y=Breakdowns))+
 
 ```
 
+```{r visu2}
+ggplot(Breakdowns, aes(x=log10(Length)))+
+  geom_bar()+
+  ggtitle("Repartition of lenght of Tunnel")
+```
+
+```{r visu3}
+ggplot(Breakdowns, aes(x=Limit))+
+  geom_bar()+
+  ggtitle("Repartition of speed limitation")
+```
+
+
+
 ## First linear model
 Without informations on tunnels or companies !
 
-```{r some_regressions}
+```{r some_regressions, eval=FALSE}
 # lm1 <-lm(Fires~.,data=Fires)
 # summary(lm1)
 lm1 <- lm(Breakdowns~Traffic+HGV+Slope+Urban+Type+Length+Limit+SlopeType, data = Breakdowns)
@@ -104,7 +119,7 @@ summary(lm1)
 ```
 From this first linear regression, it seems that "(Intercept)", "Traffic", "HGV", "Slope", "Type", "Length", "Limit" and "SlopeTypeBasin" are significant. However, the Adjusted R-squared is very small, which may indicate that this model is not appropriate. <br>
 Let us now look what problems we might have :
-```{r check_lm1_1}
+```{r check_lm1_1, eval=FALSE}
 #Checking linearity
 y<-fitted.values(lm1)
 r<-rstandard(lm1)
@@ -114,7 +129,7 @@ ggplot(data.frame(y,r),aes(y,r))+
   ggtitle("standardized residuals vs fitted values")
 ```
 
-```{r check_lm1_2}
+```{r check_lm1_2, eval=FALSE}
 #checking variance
 r2 <- abs(r)
 ggplot(data.frame(y,r2),aes(y,r2))+
@@ -123,7 +138,7 @@ ggplot(data.frame(y,r2),aes(y,r2))+
   ggtitle("absolute standardized residuals vs fitted values")
 ```
 
-```{r check_lm1_3}
+```{r check_lm1_3, eval=FALSE}
 # checking independance
 acf(r, lag.max = NULL,
     type = c("correlation", "covariance", "partial"),
@@ -132,7 +147,7 @@ pacf(r, lag.max = NULL,
      plot = TRUE, na.action = na.fail, demean = TRUE)
 ```
 It seems that in ACF there is a decreasing tendancy --> maybe correlation ?
-```{r check_lm1_4}
+```{r check_lm1_4, eval=FALSE}
 #checking normality
 ggplot(lm1, aes(sample=r))+
   stat_qq()+
