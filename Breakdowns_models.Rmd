@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE)
 library(ggplot2)
 library('lme4')
+library(MASS)
 ```
 
 ```{r loading-data}
@@ -28,11 +29,24 @@ ggplot(Breakdowns, aes(x=Breakdowns))+
 # First models
 
 ```{r sel1}
-fullmodel <- glm(Breakdowns ~ log10(Traffic)+ log10(Length) + HGV + Slope + as.factor(Limit) + as.factor(Direction) + as.factor(Urban) + as.factor(Type) + as.factor(Year) + as.factor(SlopeType), family="poisson", data=Breakdowns)
+# fullmodel <- glm(Breakdowns ~ log10(Traffic)+ log10(Length) + HGV + Slope + as.factor(Limit) + as.factor(Direction) + as.factor(Urban) + as.factor(Type) + as.factor(Year) + as.factor(SlopeType), family="poisson", data=Breakdowns)
+fullmodel <- glm.nb(Breakdowns ~ log10(Traffic)+ log10(Length) + 
+                      HGV + Slope + as.factor(Limit) +
+                      as.factor(Direction) + as.factor(Urban) +
+                      as.factor(Type) + as.factor(Year) +
+                      as.factor(SlopeType),
+                    data=Breakdowns)
 model <- step(fullmodel, direction = 'backward')
 
-emptymodel <- glm(Breakdowns ~ log10(Traffic)  ,family="poisson", data=Breakdowns)
-model <- step(emptymodel, direction = 'forward')
+# emptymodel <- glm(Breakdowns ~ log10(Traffic)  ,family="poisson", data=Breakdowns)
+emptymodel <- glm.nb(Breakdowns ~1,
+                     data=Breakdowns)
+model <- step(emptymodel, scope = ~log10(Traffic)+ log10(Length) + 
+                      HGV + Slope + as.factor(Limit) +
+                      as.factor(Direction) + as.factor(Urban) +
+                      as.factor(Type) + as.factor(Year) +
+                      as.factor(SlopeType),
+              direction = 'forward')
 
 ```
 

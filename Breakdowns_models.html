@@ -183,25 +183,149 @@ pre code {
 </div>
 <div id="first-models" class="section level1">
 <h1>First models</h1>
-<pre><code>## Start:  AIC=12176.31
+<pre><code>## Start:  AIC=6947.65
 ## Breakdowns ~ log10(Traffic) + log10(Length) + HGV + Slope + as.factor(Limit) + 
 ##     as.factor(Direction) + as.factor(Urban) + as.factor(Type) + 
 ##     as.factor(Year) + as.factor(SlopeType)
 ## 
-##                        Df Deviance   AIC
-## &lt;none&gt;                      8411.1 12176
-## - as.factor(Urban)      1   8423.3 12186
-## - as.factor(Direction)  1   8444.9 12208
-## - HGV                   1   8556.3 12320
-## - log10(Traffic)        1   8817.0 12580
-## - as.factor(Type)       1   8966.9 12730
-## - as.factor(Year)       9   9013.9 12761
-## - as.factor(SlopeType)  4  10215.1 13972
-## - as.factor(Limit)      7  10852.0 14603
-## - Slope                 1  10849.2 14612
-## - log10(Length)         1  17477.1 21240</code></pre>
-<pre><code>## Start:  AIC=29993.23
-## Breakdowns ~ log10(Traffic)</code></pre>
+##                        Df Deviance    AIC
+## &lt;none&gt;                      1191.2 6947.7
+## - HGV                   1   1204.3 6958.7
+## - as.factor(Urban)      1   1206.0 6960.4
+## - as.factor(Direction)  1   1206.0 6960.5
+## - as.factor(Year)       9   1229.0 6967.4
+## - log10(Traffic)        1   1219.9 6974.3
+## - as.factor(Type)       1   1221.3 6975.8
+## - as.factor(SlopeType)  4   1291.3 7039.7
+## - as.factor(Limit)      7   1310.3 7052.8
+## - Slope                 1   1384.6 7139.0
+## - log10(Length)         1   1893.8 7648.2</code></pre>
+<pre><code>## Start:  AIC=7822.06
+## Breakdowns ~ 1</code></pre>
+<pre><code>## Warning: glm.fit: l&#39;algorithme n&#39;a pas convergé</code></pre>
+<pre><code>##                        Df Deviance    AIC
+## + log10(Length)         1   1096.9 7698.6
+## + as.factor(Urban)      1   1103.3 7705.0
+## + as.factor(Limit)      7   1092.1 7705.9
+## + as.factor(SlopeType)  4   1098.4 7706.1
+## + log10(Traffic)        1   1149.1 7750.8
+## + Slope                 1   1164.3 7766.1
+## + HGV                   1   1193.9 7795.7
+## + as.factor(Type)       1   1208.5 7810.2
+## &lt;none&gt;                      1222.3 7822.1
+## + as.factor(Direction)  1   1222.2 7823.9
+## + as.factor(Year)       9   1216.2 7833.9
+## 
+## Step:  AIC=7691.53
+## Breakdowns ~ log10(Length)
+## 
+##                        Df Deviance    AIC
+## + log10(Traffic)        1   946.39 7428.5
+## + as.factor(Urban)      1   975.57 7457.7
+## + as.factor(SlopeType)  4   984.39 7472.5
+## + as.factor(Limit)      7  1048.18 7542.3
+## + HGV                   1  1073.59 7555.7
+## + as.factor(Type)       1  1129.96 7612.1
+## + Slope                 1  1134.81 7616.9
+## &lt;none&gt;                     1211.43 7691.5
+## + as.factor(Direction)  1  1210.81 7692.9
+## + as.factor(Year)       9  1202.64 7700.7
+## 
+## Step:  AIC=7392.7
+## Breakdowns ~ log10(Length) + log10(Traffic)
+## 
+##                        Df Deviance    AIC
+## + as.factor(Limit)      7   1065.8 7283.0
+## + Slope                 1   1093.2 7298.4
+## + as.factor(SlopeType)  4   1107.4 7318.6
+## + as.factor(Urban)      1   1130.3 7335.6
+## + HGV                   1   1149.1 7354.4
+## + as.factor(Type)       1   1174.4 7379.6
+## + as.factor(Year)       9   1166.7 7387.9
+## &lt;none&gt;                      1189.5 7392.7
+## + as.factor(Direction)  1   1189.3 7394.5
+## 
+## Step:  AIC=7275.32
+## Breakdowns ~ log10(Length) + log10(Traffic) + as.factor(Limit)
+## 
+##                        Df Deviance    AIC
+## + Slope                 1   1040.1 7133.7
+## + as.factor(SlopeType)  4   1117.4 7217.0
+## + as.factor(Type)       1   1150.6 7244.1
+## + as.factor(Urban)      1   1163.3 7256.9
+## + as.factor(Year)       9   1148.0 7257.6
+## + as.factor(Direction)  1   1174.0 7267.6
+## + HGV                   1   1177.9 7271.5
+## &lt;none&gt;                      1183.8 7275.3
+## 
+## Step:  AIC=7122.12
+## Breakdowns ~ log10(Length) + log10(Traffic) + as.factor(Limit) + 
+##     Slope
+## 
+##                        Df Deviance    AIC
+## + as.factor(SlopeType)  4   1112.2 7058.7
+## + as.factor(Urban)      1   1137.5 7077.9
+## + as.factor(Type)       1   1150.9 7091.3
+## + HGV                   1   1168.1 7108.6
+## + as.factor(Year)       9   1154.4 7110.9
+## + as.factor(Direction)  1   1175.1 7115.6
+## &lt;none&gt;                      1183.7 7122.1
+## 
+## Step:  AIC=7055.31
+## Breakdowns ~ log10(Length) + log10(Traffic) + as.factor(Limit) + 
+##     Slope + as.factor(SlopeType)
+## 
+##                        Df Deviance    AIC
+## + HGV                   1   1152.3 7017.2
+## + as.factor(Urban)      1   1153.1 7018.1
+## + as.factor(Type)       1   1159.1 7024.0
+## + as.factor(Year)       9   1155.4 7036.4
+## + as.factor(Direction)  1   1180.8 7045.7
+## &lt;none&gt;                      1192.4 7055.3
+## 
+## Step:  AIC=7016.39
+## Breakdowns ~ log10(Length) + log10(Traffic) + as.factor(Limit) + 
+##     Slope + as.factor(SlopeType) + HGV
+## 
+##                        Df Deviance    AIC
+## + as.factor(Type)       1   1167.5 6993.1
+## + as.factor(Year)       9   1157.2 6998.8
+## + as.factor(Urban)      1   1175.7 7001.2
+## + as.factor(Direction)  1   1182.1 7007.7
+## &lt;none&gt;                      1192.8 7016.4
+## 
+## Step:  AIC=6992.7
+## Breakdowns ~ log10(Length) + log10(Traffic) + as.factor(Limit) + 
+##     Slope + as.factor(SlopeType) + HGV + as.factor(Type)
+## 
+##                        Df Deviance    AIC
+## + as.factor(Year)       9   1158.6 6974.5
+## + as.factor(Urban)      1   1179.2 6979.2
+## + as.factor(Direction)  1   1179.5 6979.4
+## &lt;none&gt;                      1194.8 6992.7
+## 
+## Step:  AIC=6973.82
+## Breakdowns ~ log10(Length) + log10(Traffic) + as.factor(Limit) + 
+##     Slope + as.factor(SlopeType) + HGV + as.factor(Type) + as.factor(Year)
+## 
+##                        Df Deviance    AIC
+## + as.factor(Direction)  1   1181.1 6960.4
+## + as.factor(Urban)      1   1181.2 6960.5
+## &lt;none&gt;                      1196.5 6973.8
+## 
+## Step:  AIC=6960.36
+## Breakdowns ~ log10(Length) + log10(Traffic) + as.factor(Limit) + 
+##     Slope + as.factor(SlopeType) + HGV + as.factor(Type) + as.factor(Year) + 
+##     as.factor(Direction)
+## 
+##                    Df Deviance    AIC
+## + as.factor(Urban)  1   1179.3 6947.7
+## &lt;none&gt;                  1193.9 6960.4
+## 
+## Step:  AIC=6947.65
+## Breakdowns ~ log10(Length) + log10(Traffic) + as.factor(Limit) + 
+##     Slope + as.factor(SlopeType) + HGV + as.factor(Type) + as.factor(Year) + 
+##     as.factor(Direction) + as.factor(Urban)</code></pre>
 </div>
 <div id="models-with-fixed-and-random-effects" class="section level1">
 <h1>Models with fixed and random effects</h1>
