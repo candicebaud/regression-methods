@@ -68,8 +68,11 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
 }
 
 
-#numerical variables
-pairs(~ Acc + Traffic + HGV + Slope + Limit + Length + Width + Lanes, data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist)
+#all var
+pairs(~ Acc + Traffic + HGV + Slope + Limit + Length + Width + Lanes + Urban + Year + Direction + Type + SlopeType + Tunnel + Company,  data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist)
+
+#only relevant 
+pairs(~ Acc + Traffic + Limit + Lanes + Urban + SlopeType ,  data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist)
 ```
 
 It looks like the Accidents are mostly correlated with Lanes and Traffic but also HGV and Limit. However Lanes is correlated with Length, Traffic and HGV. \
@@ -163,6 +166,20 @@ Overall, the linear model is not completely satisfying. In the next section, I t
 *Exponential model*
 To build the model, I started with the full model and then I did backward elimination. I get this result with the best model. 
 
+```{r, echo=FALSE}
+library('glmtoolbox')
+fullmodel <- glm((Acc+1) ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes, family=Gamma(link='log'), data=Accidents)
+stepCriterion(fullmodel, criterion = 'aic', direction = c('forward', 'backward'))
+``` 
+
+```{r, echo=FALSE}
+library('glmtoolbox')
+fullmodel <- glm((Acc+1) ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes, family=poisson, data=Accidents)
+stepCriterion(fullmodel, criterion = 'aic', direction = c('forward', 'backward'))
+``` 
+
+
+
 ```{r exp model backward elimination, echo=FALSE}
 fullmodel <- glm((Acc+1) ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes, family=Gamma(link='log'), data=Accidents)
 model <- step(fullmodel, direction = 'backward')
@@ -187,6 +204,11 @@ First, we put Tunnel as the random effect
 ```{r Mixed model, echo=FALSE}
 library('lme4')
 summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Tunnel ), family=Gamma(link='log'),data = Accidents))
+``` 
+Another idea... 
+```{r Mixed model inverse, echo=FALSE}
+library('lme4')
+summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width + (1 | Tunnel ), family=poisson ,data = Accidents))
 ``` 
 
 Then we put Company as the random effect. 
@@ -224,9 +246,43 @@ summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit 
 ``` 
 
 ```{r model selection, echo=FALSE}
-install.packages("remotes")
-remotes::install_github("timnewbold/StatisticalModels")
-library('st)
+#install.packages("remotes")
+#remotes::install_github("timnewbold/StatisticalModels")
+#library('StatisticalModels')
 test <- GLMERSelect(responseVar = Acc, fitFamily=poisson, randomStruct = "(1|Company)+(1|Tunnel)", modelData = Accidents)
 ``` 
 
+
+## Negative binomial ? 
+The residuals don't look good at all...\
+```{r negative binomial, echo=FALSE}
+library('MASS')
+model <- glm.nb(Acc ~ log(Traffic) + Urban + Type + log(Length) + Limit  + Width, data = Accidents)
+summary(model)
+
+plot(model$fitted.values, model$residuals)
+
+``` 
+With random and fixed effects : it doesn't converge 
+```{r negative binomial, echo=FALSE}
+
+model_rd <- glmer.nb(Acc ~ log(Traffic) + Urban + Type + log(Length) + Limit  + Width + (1 | Year) + (1|Company) + (1|Tunnel), data = Accidents)
+summary(model_rd)
+
+plot(model$fitted.values, model$residuals)
+
+``` 
+
+
+
+## AUcun rapport, tirage pere noel secret
+
+```{r}
+l = c('Oliver', 'Thomas', 'Emilie', 'Candice')
+
+sample(l, 2, replace=FALSE)
+```
+Emilie -> candice
+Oliver ->Emilie
+Candice -> Thomas 
+Thomas ->Oliver

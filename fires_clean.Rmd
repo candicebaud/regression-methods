@@ -88,6 +88,8 @@ plot(model.step.b)
 ```
 The multiple R squared is not that good and the Slope coefficient is not significant. This might not be the best model at all. The distribution was close to a poisson, so let's try to fit poisson models.
 
+
+
 *Poisson model*
 ```{r useless, echo=FALSE}
 ggplot(Fires,aes(x=log(Traffic),y=Fires, fill=Tunnel, colour=Tunnel) )+

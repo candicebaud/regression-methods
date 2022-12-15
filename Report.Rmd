@@ -82,9 +82,12 @@ ggplot(p,aes(x=p[,1]))+
   geom_density(alpha=0.3, lwd=1, bw=0.3)+
   ggtitle("poisson")
 
-suppressWarnings(pairs(~ Fires + Traffic + HGV + Slope + Limit + Length, data=Fires, upper.panel = panel.cor, diag.panel = panel.hist))
+suppressWarnings(pairs(~ Fires + Traffic + HGV + Length + Type + SlopeType + Company , data=Fires, upper.panel = panel.cor, diag.panel = panel.hist))
 ```
 From the correlation plot, it is clear that the variables that seem to be the most explanatory are Length, HGV and Traffic. Moreover, Length is also strongly correlated with HGV. Finally, Limit is also significatively correlated with HGV. \
+
+BROUILLON en français : traffic length hgv et slopetype sont les plus corrélées avec fires. Company je l'ai laissé parce que c'est corrélé avec traffic et slopetype donc c'est intéressant. length et HGV corrélées intéressant. Slopetype et traffic corrélées intéressant.
+
 
 REMARK : I was thinking of then plot length with HGV, and LImit with HGV and fit a regression to see a bit how the variables are linked. \
 
@@ -92,7 +95,51 @@ From this exploratory analysis, we will try to fit a Poisson model. \
 REMARK : put some equations as in his report ? or we put them after ?\
 
 ## Description of Accidents dataset
-The accidents dataset gathers contains `r n_distinct(Ac$Tunnel)` tunnels ran by `r n_distinct(Ac$Company)` companies. The variables from the dataset Fires are also present in the Accidents one. But the latter also includes the Year in which the accidents occurred, the width of lanes in the tunnel in metres (variable Width) and the number of lanes in the tunnel (variable Lanes). 
+The accidents dataset gathers contains `r n_distinct(Ac$Tunnel)` tunnels ran by `r n_distinct(Ac$Company)` companies. The variables from the dataset Fires are also present in the Accidents one. But the latter also includes the Year in which the accidents occurred, the width of lanes in the tunnel in metres (variable Width) and the number of lanes in the tunnel (variable Lanes). \
+
+Figure 2 shows the distribution of the fires with a fitted exponential distribution, and the most relevant correlations between the different variables. We chose to represent only the variables that had a correlation greater than 0.25. \
+
+```{r Accidents corr and fit, echo=FALSE}
+p<-data.frame(rexp(100,1/mean(Accidents$Acc)))
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.5, lwd=1, bw=0.5)+
+  ggtitle("exp(0.25)")
+
+#function below can be erased if we keep the one above for Fires
+panel.hist <- function(x, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+}
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+
+suppressWarnings(pairs(~ Acc + Traffic + Limit + Lanes + Urban + SlopeType ,  data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist))
+
+```
+What one clearly sees from the correlation plot is that Accidents are mostly correlated with Traffic, which seems intuitive since the more people on the road, the most accidents can occur. The second most correlated variable is SlopeType which can take values : `r unique(Ac$SlopeType)`. Intuitively, we conclude that according to the SlopeType, the dangerousness of the tunnel won't be the same. One thing to notice however is that SlopeType and Traffic are also quite strongly correlated (0.48), which means that depending on the slope type, the affluence might differ which can in the end impact the number of accidents. The same thing occurs for the Urban variable. Indeed, Urban is quite strongly correlated with the number of accidents but also with the traffic and the slope type. \
+
+Comment : Include Limit?? Maybe we can just show the 5 more relevant ? \
+
+From this correlations analysis, what seems important first in this database is to identify which variable truly has an impact on the number of accidents. After that, we'll be able to fit a proper poisson or exponential model. \
+
+REMARQUE POUR MOI MEME : relire cette partie
+
 
 
 # Model fitting
@@ -145,6 +192,42 @@ summary(mixed_model)
 
 
 ## Accidents
+We fit a Poisson model since we have count data. \
+
+*Without random effects*\
+
+We first perform a forward and backward selection using the funtion stepCriterion from the package glmtoolbox. The final model includes the following variables : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV. 
+
+```{r variable selection, echo=FALSE}
+library('glmtoolbox')
+fullmodel <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes, family=poisson, data=Accidents)
+stepCriterion(fullmodel, criterion = 'aic', direction = c('forward', 'backward'))
+``` 
+
+Then, we build the model with those variables. 
+\
+
+```{r poisson model, echo=FALSE}
+model <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV , family=poisson, data=Accidents)
+summary(model)
+#plot(model$fitted.values, model$residuals)
+``` 
+
+Both AIC `r model$AIC` and deviance `r model$deviance` are quite big. Our variables are significant at the usual 5%.\
+
+*With random effects*\
+We now want to adjust our Poisson model with random effects. As for the dataset Fires, we consider :\
+  *random : Tunnel, Company, \
+  *fixed : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV\
+
+The model doesn't converge if we use the same variables as for the model without random effects. Indeed, by fitting the model with the exact same setup, we obtain with a mixed model that SlopeType isn't significant, nor HGV. We fit the model without those variables.\
+
+PROBLEME DE CONVERGENCE DU MODELE ICI 
+```{r mixed model, echo=FALSE}
+library('lme4')
+model2 <- glmer(Acc~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents)
+summary(model2)
+``` 
 
 
 # Discussion 
