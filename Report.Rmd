@@ -148,6 +148,7 @@ summary(mixed_model)
 
 
 # Discussion 
+QQplots, analyse modèles, ce qu'on aurait pu améliorer
 
 
 # References 

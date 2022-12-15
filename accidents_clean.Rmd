@@ -17,7 +17,7 @@ lapply(c("dplyr","chron","ggplot2","tidyr","questionr","survival","forcats",
          "ggpubr", "ggthemes", "gridExtra", "tidyverse", "rstatix","ggsci",
          "wesanderson","kableExtra",
          "naniar","boot","scales","psych","ggcorrplot","ggradar", 
-         "caret"), 
+         "caret", "lme4"), 
        library, character.only=TRUE)
 
 Sys.setlocale("LC_TIME", "English")
@@ -213,3 +213,20 @@ summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit 
 ```{r correlation of fixed effects, echo = FALSE}
 pairs(~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Width, data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist)
 ```
+## Poisson model
+```{r mixed model by year and company and tunnel poisson, echo=FALSE}
+summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit  + Width + (1 | Year) + (1|Company) + (1|Tunnel), family=poisson, data = Accidents))
+``` 
+
+
+```{r mixed model by company and tunnel poisson, echo=FALSE}
+summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit  + Width + (1|Company) + (1|Tunnel), family=poisson, data = Accidents))
+``` 
+
+```{r model selection, echo=FALSE}
+install.packages("remotes")
+remotes::install_github("timnewbold/StatisticalModels")
+library('st)
+test <- GLMERSelect(responseVar = Acc, fitFamily=poisson, randomStruct = "(1|Company)+(1|Tunnel)", modelData = Accidents)
+``` 
+
