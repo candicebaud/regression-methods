@@ -222,13 +222,21 @@ We now want to adjust our Poisson model with random effects. As for the dataset 
 
 The model doesn't converge if we use the same variables as for the model without random effects. Indeed, by fitting the model with the exact same setup, we obtain with a mixed model that SlopeType isn't significant, nor HGV. We fit the model without those variables.\
 
-PROBLEME DE CONVERGENCE DU MODELE ICI 
+PROBLEME DE CONVERGENCE DU MODELE ICI \
 ```{r mixed model, echo=FALSE}
 library('lme4')
 model2 <- glmer(Acc~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents)
 summary(model2)
 ``` 
 
+*Negative binomial*\
+With random effects \
+Still a problem with convergence... so... \
+```{r negative binomial, echo=FALSE}
+library('lme4')
+model3 <- glmer.nb(Acc~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), data = Accidents)
+summary(model3)
+``` 
 
 # Discussion 
 QQplots, analyse modèles, ce qu'on aurait pu améliorer
