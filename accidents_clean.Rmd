@@ -237,6 +237,7 @@ pairs(~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit + SlopeType + Wi
 ```
 ## Poisson model
 ```{r mixed model by year and company and tunnel poisson, echo=FALSE}
+library('lme4')
 summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit  + Width + (1 | Year) + (1|Company) + (1|Tunnel), family=poisson, data = Accidents))
 ``` 
 
@@ -250,6 +251,45 @@ summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit 
 #remotes::install_github("timnewbold/StatisticalModels")
 #library('StatisticalModels')
 test <- GLMERSelect(responseVar = Acc, fitFamily=poisson, randomStruct = "(1|Company)+(1|Tunnel)", modelData = Accidents)
+``` 
+
+## rescaling\
+On voit rien... \
+```{r, echo=FALSE}
+library('ggplot2')
+ggplot(Accidents_new,aes(x=Company,y=Acc,col=Company)) + geom_jitter() + geom_boxplot(alpha=0.2) + facet_wrap(~Company)
+
+```
+
+variable selection
+
+```{r var selection}
+library('MuMIn')
+
+model <- glmer(Acc ~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents_new)
+
+mumindd <- dredge(model)
+
+```
+
+
+```{r rescale and poisson mixed effects, echo=FALSE}
+Accidents_new <- transform(Accidents,
+    Traffic=scale(Traffic),
+    HGV=scale(HGV),
+    Length = scale(Length),
+    Limit = scale(Limit),
+    Width = scale(Width),
+    Slope = scale(Slope))
+m<-glmer(Acc ~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents_new)
+isSingular(m)
+summary(m)
+``` 
+
+```{r selection, echo=FALSE}
+library('glmtoolbox')
+full <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope  + Type + log(Length) + Limit + SlopeType + Width + Lanes, family=poisson, data=Accidents_new)
+stepCriterion(full, criterion = 'aic', direction = c('forward', 'backward'))
 ``` 
 
 
