@@ -13,7 +13,7 @@ library(MASS)
 ```
 
 ```{r loading-data}
-load("Data/Breakdowns.RData")
+load("regression-methods/Data/Breakdowns.RData")
 ```
 
 # A bit of data exploration
@@ -27,13 +27,18 @@ ggplot(Breakdowns, aes(x=Breakdowns))+
 
 
 # First models
+Some choices : 
+Random : Year, Companies, Tunnels
+Adjustment : Traffic -> log(Traffic), Length -> log(length), slope -> slope.10^2, HGV -> HGV . 10^2
+
 
 ```{r sel1}
 # fullmodel <- glm(Breakdowns ~ log10(Traffic)+ log10(Length) + HGV + Slope + as.factor(Limit) + as.factor(Direction) + as.factor(Urban) + as.factor(Type) + as.factor(Year) + as.factor(SlopeType), family="poisson", data=Breakdowns)
+
 fullmodel <- glm.nb(Breakdowns ~ log10(Traffic)+ log10(Length) + 
-                      HGV + Slope + as.factor(Limit) +
+                      HGV*10^2 + Slope*10^2 + as.factor(Limit) +
                       as.factor(Direction) + as.factor(Urban) +
-                      as.factor(Type) + as.factor(Year) +
+                      as.factor(Type) +
                       as.factor(SlopeType),
                     data=Breakdowns)
 model <- step(fullmodel, direction = 'backward')
@@ -42,9 +47,9 @@ model <- step(fullmodel, direction = 'backward')
 emptymodel <- glm.nb(Breakdowns ~1,
                      data=Breakdowns)
 model <- step(emptymodel, scope = ~log10(Traffic)+ log10(Length) + 
-                      HGV + Slope + as.factor(Limit) +
+                      HGV*10^2 + Slope*10^2 + as.factor(Limit) +
                       as.factor(Direction) + as.factor(Urban) +
-                      as.factor(Type) + as.factor(Year) +
+                      as.factor(Type) +
                       as.factor(SlopeType),
               direction = 'forward')
 
