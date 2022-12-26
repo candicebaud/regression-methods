@@ -210,10 +210,20 @@ Then, we build the model with those variables.
 ```{r poisson model, echo=FALSE}
 model <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV , family=poisson, data=Accidents)
 summary(model)
-#plot(model$fitted.values, model$residuals)
+
 ``` 
+```{r poisson model residuals, echo=FALSE}
+plot(model$fitted.values, model$residuals)
+```
 
 Both AIC `r model$AIC` and deviance `r model$deviance` are quite big. Our variables are significant at the usual 5%.\
+
+*TEST*
+```{r poisson model test, echo=FALSE}
+model_test <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV , family=poisson, data=Accidents_new)
+summary(model_test)
+plot(model_test$fitted.values, model_test$residuals)
+``` 
 
 *With random effects*\
 We now want to adjust our Poisson model with random effects. As for the dataset Fires, we consider :\
@@ -222,9 +232,20 @@ We now want to adjust our Poisson model with random effects. As for the dataset 
 
 The model doesn't converge if we use the same variables as for the model without random effects. Indeed, by fitting the model with the exact same setup, we obtain with a mixed model that SlopeType isn't significant, nor HGV. We fit the model without those variables.\
 
-```{r mixed model, echo=FALSE}
+```{r mixed model without rescaled variables, echo=FALSE}
 library('lme4')
-#rescaling variables 
+model2 <- glmer(Acc~ log(Traffic) + Slope +HGV + log(Length) + Limit + Type + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents)
+suppressWarnings(summary(model2))
+``` 
+
+```{r mixed model without rescaled variables residuals, echo=FALSE}
+plot(model2)
+```
+Residuals ?? \ 
+
+To avoid having a convergence problem, we rescale the variables and then perform the model. 
+
+```{r rescale and poisson mixed effects, echo=FALSE}
 Accidents_new <- transform(Accidents,
     Traffic=scale(Traffic),
     HGV=scale(HGV),
@@ -232,9 +253,16 @@ Accidents_new <- transform(Accidents,
     Limit = scale(Limit),
     Width = scale(Width),
     Slope = scale(Slope))
-model2 <- glmer(Acc~ log(Traffic) + Slope +HGV + log(Length) + Limit + Type + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents_new)
-suppressWarnings(summary(model2))
+m<-glmer(Acc ~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents_new)
+summary(m)
 ``` 
+
+```{r rescale and poisson mixed effects residuals, echo=FALSE}
+plot(m)
+```
+
+The residuals look homoscedastic which means that the model explains quite well the data.
+
 
 *Negative binomial*\
 With random effects \
@@ -245,6 +273,31 @@ model3 <- glmer.nb(Acc~ log(Traffic) + log(Length) + Limit + Type + Width + Dire
 summary(model3)
 ``` 
 
+```{r negative binomial residuals, echo=FALSE}
+plot(model3)
+```
+Residuals??? \
+
+Rescaling
+```{r negative binomial rescaled variables, echo=FALSE}
+library('lme4')
+model4 <- glmer.nb(Acc~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), data = Accidents_new)
+summary(model4)
+``` 
+
+```{r negative binomial rescaled variables residuals, echo=FALSE}
+plot(model4)
+```
+
+Here again the residuals are homoscedatic which gives us confidence in the model. All that could be explained has been explained. 
+
+
+*Conclusion*\
+If we consider models without random effects, the best Poisson model we can build in terms of AIC is the one with the following variables : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV. This model however has an AIC of 6065 which is quite enormous. \
+Without rescaling variables, one can fit a poisson mixed models with Tunnel and Company as random effects. This gives a smaller AIC which seems then to fit better our data. However, without rescaling, the model doesn't converge. \
+Finally, by rescaling the variables, we obtain a smaller AIC because we obtain a smaller likelihood and the model converges. \
+
+TO DO : variable selection with deviance or aic for mixed models + plot les résidus
 
 
 
