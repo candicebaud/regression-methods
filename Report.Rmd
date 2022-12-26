@@ -3,22 +3,23 @@ title: "Project Regression Methods - 2022"
 author: "Céline Guex - sciper n°310673, Candice Baud - sciper n°359523"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
-  html_document:
-    df_print: paged
-  includes:
-    in_header: Preamble.tex
   pdf_document:
     number_sections: yes
+  includes:
+    in_header: Preamble.tex
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(dplyr)
-lapply(c("dplyr","chron","ggplot2","tidyr","questionr","survival","forcats",
+lapply(c("dplyr","ggplot2","tidyr","chron","questionr","survival","forcats",
          "data.table","table1","lubridate", "ggpubr","viridis","finalfit",
          "ggpubr", "ggthemes", "gridExtra", "tidyverse", "rstatix","ggsci",
-         "wesanderson","kableExtra",      "naniar", "boot", "scales", "psych",          "ggcorrplot", "ggradar", "caret", "gam"), 
+         "wesanderson","kableExtra",      "naniar", "boot", "scales", "psych",          "ggcorrplot", "caret", "gam"), 
        library, character.only=TRUE)
+#"ggradar"
 ```
 
 ```{r loading-data}
