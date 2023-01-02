@@ -48,7 +48,7 @@ Write after all the models will be done
 This data set lists fires that occurred in French tunnels. The data set gathers `r n_distinct(Fi$Tunnel)` tunnels ran by `r n_distinct(Fi$Company)` companies. Many parameters are also registered, like  traffic, proportion of trucks among tunnel's users (in %), length of the tunnel, maximum speed allowed,slope inclination in the tunnel (in %), shape of the tunnel (slope type in the tunnel) and situation of the tunnel (if it lies in urban area or not). Some tunnels are unidirectional and some are bidirectional.
 We will use this data set to determine the factors that are the most likely to yields to fires in tunnel. We will also look for factors that might reduce the risk of fires.\
 
-Figure 1 shows the distribution of the fires with a fitted poisson distribution, and the correlations between the different variables.\
+Figure 1 shows the distribution of the fires with a fitted poisson distribution, and the correlations between the different variables.We only display the variables that are the most correlated with the variable fires. 
 
 REMARK : I wanted to put them side by side with par but it doesn't seem to work. \
 ```{r exploratory, echo=FALSE}
@@ -82,17 +82,12 @@ ggplot(p,aes(x=p[,1]))+
   geom_density(alpha=0.3, lwd=1, bw=0.3)+
   ggtitle("poisson")
 
-suppressWarnings(pairs(~ Fires + Traffic + HGV + Length + Type + SlopeType + Company , data=Fires, upper.panel = panel.cor, diag.panel = panel.hist))
+suppressWarnings(pairs(~ Fires + Traffic + HGV + Length + SlopeType + Type + Company, data=Fires, upper.panel = panel.cor, diag.panel = panel.hist))
 ```
-From the correlation plot, it is clear that the variables that seem to be the most explanatory are Length, HGV and Traffic. Moreover, Length is also strongly correlated with HGV. Finally, Limit is also significatively correlated with HGV. \
+From the correlation plot, it is clear that the variables that seem to be the most explanatory are Length, HGV and Traffic. Moreover, Length is also strongly correlated with HGV. Company and Type are not particularly correlated with Fires that we aim to explain but Type is strongly with Length and Company is correlated with SlopeType and Traffic. Those relationships are important to be kept in mind to understand which variable really has a causal effect in our model. \
 
-BROUILLON en français : traffic length hgv et slopetype sont les plus corrélées avec fires. Company je l'ai laissé parce que c'est corrélé avec traffic et slopetype donc c'est intéressant. length et HGV corrélées intéressant. Slopetype et traffic corrélées intéressant.
-
-
-REMARK : I was thinking of then plot length with HGV, and LImit with HGV and fit a regression to see a bit how the variables are linked. \
-
-From this exploratory analysis, we will try to fit a Poisson model. \
 REMARK : put some equations as in his report ? or we put them after ?\
+
 
 ## Description of Accidents dataset
 The accidents dataset gathers contains `r n_distinct(Ac$Tunnel)` tunnels ran by `r n_distinct(Ac$Company)` companies. The variables from the dataset Fires are also present in the Accidents one. But the latter includes in addition the year in which the accidents occurred (variable Year), the width of lanes in the tunnel in metres (variable Width) and the number of lanes in the tunnel (variable Lanes). \
@@ -136,6 +131,7 @@ What one clearly sees from the correlation plot is that Accidents are mostly cor
 
 From this correlation analysis, the most important aspect to look at in this database is which variable truly has an impact on the number of accidents. Indeed, variables being quite correlated, it is important to dissociate the different effects to identify the real causal effects. 
 
+## Description of Breakdowns dataset
 
 # Model fitting
 We started the model fitting process by doing some more data visualisation. After that, we decided to use a technique to assess the plausibility of our model assumption thanks to the course *Statistical computation and visualisation* by T.Masak. \
@@ -146,46 +142,61 @@ TO DO : change place of link into references
 Moreover, data visualisation enabled us to see that the variables Traffic and Length have very big values compared to the other variables, so we decided to apply the log function to the values to fit the models. 
 
 ## Fires
-We try to fit to the data a Poisson model. 
+We decided to model the number of fires with a Poisson model, which was not rejected by our bootstrap algorithm. We started by doing a variable selection in the whole dataset which led to the model with only Tunnel and Company as relevant variables. This of course is not a plausible explanation of the causes of fires, and the parameters such as the traffic, the speed limit, or number of lanes seem to have a greater causal effect. Thus, we decided to exclude Tunnel and Company variables to better fit the model in a first approach. In the second approach, we will extend this model by considering Tunnel and Company as random effects in a mixed model setup.
 
 ### Poisson model
-```{r selection, echo =FALSE, include = FALSE}
+```{r selection, echo =FALSE, include=FALSE}
+library('glmtoolbox')
 fullmodel <- glm(Fires ~ log(Traffic) + HGV + Slope + Limit+ log(Length) + Direction + Urban + Type + Length + Traffic, family="poisson", data=Fires)
-model <- step(fullmodel, direction = 'backward')
+model <- stepCriterion(fullmodel, direction = 'backward')
 ``` 
 
+The best model according to AIC includes the following variables :
+```{r selection result, echo =FALSE}
+model$final
+``` 
 ```{r better model, echo=FALSE}
-m2 <- glm(Fires ~ log(Traffic) + HGV + log(Length), family="poisson", data=Fires)
+m2 <- glm(Fires ~ log(Traffic) + HGV + log(Length) + Traffic, family="poisson", data=Fires)
 summary(m2)
-
-par(mfrow=c(2,2)) 
-plot(model)
+#par(mfrow=c(2,2)) 
+#plot(m2)
 ```
 
+The model we fitted implies this equation :
+$$
+\ln(\mathbb{E}(Fires)) = -27.70 + 1.178*\log(Traffic) +6.386*HGV + 0.6967*\log(Length) -1.19*10**9*Traffic
+$$
+The model we obtain is quite 'simple' in the sense that it contains few explanatory variables. The AIC is 364.07 which gives us confidence in the validity of our variable selection. The variables included are all statistically significative at the usual 5% level. 
+
+```{r residuals model, echo=FALSE}
+plot(m2$fitted.values, m2$residuals)
+```
+
+The residuals plotted below have the usual shape of the Poisson residuals with characteristic bands. However, there are some outliers for fitted values greater than 5 and residuals greater than 10. Overall, the model is very satisfying. The next section is going to be about improving this model by adding random effects.
+
+
 ### Poisson mixed model
-To improve the model, we decide to fit a mixed model. Indeed, by doing some variable selection with AIC or BIC, one always obtain in the end Tunnel and Company due to their heterogeneity. But, it isn't reasonable to consider that Fires depend more on the company or the tunnel itself than paramters that define the tunnel, that is to say the number of lanes, its length ... \
-The idea here is then to consider random and fixed effects on the variables that were significant previously :\
+To improve the model, we decide to fit a mixed model. The idea here is then to consider random and fixed effects on the variables that were significant previously :\
   *random : Tunnel, Company, 
-  *fixed : log(Traffic), HGV, Urban, Type, log(Length), Limit, SlopeType, Width\
+  *fixed : log(Traffic), HGV, log(Length)\
+  
+By fitting the mixed model on Tunnel and Company, we obtain that the variance of the variable Company is only of 0.05 which means including it as a random effect is not relevant. Moreover, the coefficients obtained with Company and without Company as a random effect are very close. In addition, the AIC slighlty improves by removing Company as a random effect, which leads us to build the model with only Tunnel as a random effect.
 
 ```{r Mixed model tunnel, echo=FALSE}
 library('lme4')
-summary(glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Tunnel ), data = Fires, family=poisson))
+mixed_model <- glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Tunnel ), data = Fires, family=poisson)
+summary(mixed_model)
 ```
 
-Then with company
-```{r Mixed model company, echo=FALSE}
-library('lme4')
-summary(glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Company ), data = Fires, family=poisson))
-``` 
 
-
-With both
-```{r Mixed model company and tunnel, echo=FALSE}
+```{r Mixed model tunnel residuals, echo=FALSE}
 library("lme4")
-mixed_model <- glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Company) +(1| Tunnel), data = Fires, family=poisson)
-summary(mixed_model)
+plot(mixed_model)
 ``` 
+
+TO DO : comment the results : comment is quite similar to without random effects but explained why the model with random effect is better
+
+### Conclusion on the dataset Fires
 
 
 ## Accidents
@@ -223,26 +234,25 @@ plot(model$fitted.values, model$residuals)
 
 We can see from the residuals a banding pattern that is characteristic from the Poisson residuals. However, there are some outliers for the fitted values greater than 20 and residuals values greater than 10.\
 
-Comment : Comment more
+Comment : Comment more maybe? 
 
 
 ### With random effects
-We now want to adjust our Poisson model with random effects. As for the dataset Fires, we consider :\
-  *random : Tunnel, Company, \
-  *fixed : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV\
+As seen in the previous part, the model we fitted is not completely satisfying, with an AIC that is quite important, a lot of variables included in the regression with some counter-intuitive causal effects, and without taking in account the Tunnel and the Company. Therefore, we want to improve our Poisson model by adding random effects. As for the dataset Fires, we consider :\
+  *random effects : Tunnel, Company, \
+  *fixed effects : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV\
 
 The model doesn't converge if we use the same variables as for the model without random effects. Indeed, by fitting the model with the exact same setup, we obtain with a mixed model that SlopeType isn't significant, nor HGV. We fit the model without those variables.\
 
 ```{r mixed model without rescaled variables, echo=FALSE}
 library('lme4')
-model2 <- glmer(Acc~ log(Traffic) + Slope +HGV + log(Length) + Limit + Type + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents)
+model2 <- glmer(Acc~ log(Traffic) + Slope + log(Length) + Limit + Type + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents)
 suppressWarnings(summary(model2))
 ``` 
 
 ```{r mixed model without rescaled variables residuals, echo=FALSE}
 plot(model2)
 ```
-Residuals ?? \ 
 
 To avoid having a convergence problem, we rescale the variables and then perform the model. 
 
@@ -254,6 +264,7 @@ Accidents_new <- transform(Accidents,
     Limit = scale(Limit),
     Width = scale(Width),
     Slope = scale(Slope))
+
 m<-glmer(Acc ~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents_new)
 summary(m)
 ``` 
@@ -263,7 +274,6 @@ plot(m)
 ```
 
 
-The residuals look homoscedastic which means that the model explains quite well the data.
 
 ### PROBABLY DO NOT INCLUDE : scaling variables on the model without random effects
 ```{r poisson model test, echo=FALSE}
@@ -297,16 +307,15 @@ summary(model4)
 plot(model4)
 ```
 
-Here again the residuals are homoscedatic which gives us confidence in the model. All that could be explained has been explained. 
 
-
-# Conclusion
-If we consider models without random effects, the best Poisson model we can build in terms of AIC is the one with the following variables : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV. This model however has an AIC of 6065 which is quite enormous. \
+### Conclusion on the dataset Accidents
+If we consider models without random effects, the best Poisson model we can build in terms of AIC is the one with the following variables : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV, Year. This model however has an AIC of 6065 which is quite enormous. It includes a lot of variables and doesn't take in account the variables Tunnel and Company. \
 Without rescaling variables, one can fit a poisson mixed models with Tunnel and Company as random effects. This gives a smaller AIC which seems then to fit better our data. However, without rescaling, the model doesn't converge. \
-Finally, by rescaling the variables, we obtain a smaller AIC because we obtain a smaller likelihood and the model converges. \
+Finally, by rescaling the variables, we obtain a smaller AIC because we obtain a smaller likelihood due to the rescaling and the model converges. \
 
 TO DO : variable selection with deviance or aic for mixed models + plot les résidus
 
+## Breakdowns
 
 
 # Discussion 
