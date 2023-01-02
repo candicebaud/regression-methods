@@ -39,8 +39,8 @@ Ac<- Accidents
 
 # Introduction - Summary
 This report describes the analysis of three databases on events in French motorway tunnels. \
-The data shows ... to do after our analysis.
-
+The three datasets presented different features and our analysis led us to do three different models. \
+Write after all the models will be done
 
 
 # Initial data analysis
@@ -95,9 +95,9 @@ From this exploratory analysis, we will try to fit a Poisson model. \
 REMARK : put some equations as in his report ? or we put them after ?\
 
 ## Description of Accidents dataset
-The accidents dataset gathers contains `r n_distinct(Ac$Tunnel)` tunnels ran by `r n_distinct(Ac$Company)` companies. The variables from the dataset Fires are also present in the Accidents one. But the latter also includes the Year in which the accidents occurred, the width of lanes in the tunnel in metres (variable Width) and the number of lanes in the tunnel (variable Lanes). \
+The accidents dataset gathers contains `r n_distinct(Ac$Tunnel)` tunnels ran by `r n_distinct(Ac$Company)` companies. The variables from the dataset Fires are also present in the Accidents one. But the latter includes in addition the year in which the accidents occurred (variable Year), the width of lanes in the tunnel in metres (variable Width) and the number of lanes in the tunnel (variable Lanes). \
 
-Figure 2 shows the distribution of the fires with a fitted exponential distribution, and the most relevant correlations between the different variables. We chose to represent only the variables that had a correlation greater than 0.25. \
+Figure 2 shows the distribution of the fires with a fitted exponential distribution, and the most relevant correlations between the different variables. We chose to represent only the variables that had a correlation greater than 0.25 to make it more readable. \
 
 ```{r Accidents corr and fit, echo=FALSE}
 p<-data.frame(rexp(100,1/mean(Accidents$Acc)))
@@ -134,24 +134,21 @@ suppressWarnings(pairs(~ Acc + Traffic + Limit + Lanes + Urban + SlopeType ,  da
 ```
 What one clearly sees from the correlation plot is that Accidents are mostly correlated with Traffic, which seems intuitive since the more people on the road, the most accidents can occur. The second most correlated variable is SlopeType which can take values : `r unique(Ac$SlopeType)`. Intuitively, we conclude that according to the SlopeType, the dangerousness of the tunnel won't be the same. One thing to notice however is that SlopeType and Traffic are also quite strongly correlated (0.48), which means that depending on the slope type, the affluence might differ which can in the end impact the number of accidents. The same thing occurs for the Urban variable. Indeed, Urban is quite strongly correlated with the number of accidents but also with the traffic and the slope type. \
 
-Comment : Include Limit?? Maybe we can just show the 5 more relevant ? \
-
-From this correlations analysis, what seems important first in this database is to identify which variable truly has an impact on the number of accidents. After that, we'll be able to fit a proper poisson or exponential model. \
-
-REMARQUE POUR MOI MEME : relire cette partie
-
+From this correlation analysis, the most important aspect to look at in this database is which variable truly has an impact on the number of accidents. Indeed, variables being quite correlated, it is important to dissociate the different effects to identify the real causal effects. 
 
 
 # Model fitting
-Explanation of technique to justify our choice of model :
+We started the model fitting process by doing some more data visualisation. After that, we decided to use a technique to assess the plausibility of our model assumption thanks to the course *Statistical computation and visualisation* by T.Masak. \
 The principle is quite simple : we use parametric bootstrap to test if the law $F$ of a random sample comes from a certain parametric family $\mathcal{F}=\{F_\theta : \theta \in \Theta\}$, namely we test $H_0:F\in \mathcal{F}$ versus $H_1: F \notin \mathcal{F}$. We proceed by measuring $T= \sup_{x} |\hat{F}_N(x)-F_{\hat{\lambda}}(x)|$ and we hope to have a small $T$ under $H_0$. Details of the algorithm can be found under this link : https://htmlpreview.github.io/?https://raw.githubusercontent.com/TMasak/StatComp/master/Notes/10_Bootstrap.html
 TO DO : change place of link into references
+\
 
+Moreover, data visualisation enabled us to see that the variables Traffic and Length have very big values compared to the other variables, so we decided to apply the log function to the values to fit the models. 
 
 ## Fires
 We try to fit to the data a Poisson model. 
 
-*Poisson model*
+### Poisson model
 ```{r selection, echo =FALSE, include = FALSE}
 fullmodel <- glm(Fires ~ log(Traffic) + HGV + Slope + Limit+ log(Length) + Direction + Urban + Type + Length + Traffic, family="poisson", data=Fires)
 model <- step(fullmodel, direction = 'backward')
@@ -165,7 +162,7 @@ par(mfrow=c(2,2))
 plot(model)
 ```
 
-*Poisson mixed model*
+### Poisson mixed model
 To improve the model, we decide to fit a mixed model. Indeed, by doing some variable selection with AIC or BIC, one always obtain in the end Tunnel and Company due to their heterogeneity. But, it isn't reasonable to consider that Fires depend more on the company or the tunnel itself than paramters that define the tunnel, that is to say the number of lanes, its length ... \
 The idea here is then to consider random and fixed effects on the variables that were significant previously :\
   *random : Tunnel, Company, 
@@ -192,40 +189,44 @@ summary(mixed_model)
 
 
 ## Accidents
-We fit a Poisson model since we have count data. \
+For the Accidents feature, we decided to model our data with a Poisson model, which was not rejected by our bootstrap algorithm. We started by doing a variable selection in the whole dataset which led to the model with only Tunnel and Company as relevant variables. This of course is not a plausible explanation of the causes of accidents, and the parameters such as the traffic, the speed limit, or number of lanes seem to have a greater causal effect. Thus, we decided to exclude Tunnel and Company variables to better fit the model in a first approach. In the second approach, we will extend this model by considering Tunnel and Company as random effects in a mixed model setup.
 
-*Without random effects*\
-
-We first perform a forward and backward selection using the funtion stepCriterion from the package glmtoolbox. The final model includes the following variables : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV. 
+### Poisson model without the variables Tunnel and Company
+We first perform a forward and backward selection using the funtion *stepCriterion* from the package *glmtoolbox*. The final model includes the following variables : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV, Year. 
 
 ```{r variable selection, echo=FALSE}
 library('glmtoolbox')
-fullmodel <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes, family=poisson, data=Accidents)
+fullmodel <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes + Year, family=poisson, data=Accidents)
 stepCriterion(fullmodel, criterion = 'aic', direction = c('forward', 'backward'))
 ``` 
+Comment : not plot the tables, but put them manually maybe ? \
 
-Then, we build the model with those variables. 
+Thanks to this variable selection, we are now able to fit our Poisson model.
 \
 
 ```{r poisson model, echo=FALSE}
-model <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV , family=poisson, data=Accidents)
+model <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV + Year , family=poisson, data=Accidents)
 summary(model)
-
 ``` 
+The model equation we obtained is put below and is quite complicated. There are lots of explanatory variables, and the summary indicates that the AIC is of 6057.6 which is quite enormous. We can surely improve the model on this aspect by reducing the number of regressors. 
+$$
+\ln(\mathbb{E}(Accidents)) = -51.286647 + 0.626838*\log(Traffic) + 0.582956*\log(Length) -0.018712*Limit -0.614479*Width -2.480020*Slope -0.867039*HGV + 0.020613 -0.139456*Direction2 + 0.947456*TypeUnidirectionnal +  0.886806*SlopeTypeBasin + 1.022039*SlopeTypeUnknown + 0.144215*SlopeTypeContinuous -0.590130*SlopeTypeRoof + 
+$$
+\
+The variables included are mostly statistically relevant under the 5% usual level, except for the continuous *SlopeType*. The other ones are relevant with even pvalues close to zero for the variables *Type*, *Limit*, *log(Length)*, *log(Traffic)* and slope types *basin* and *unknown*. \
+
+What is shown by this model is that the number of accidents depends positively on the traffic intensity, as well as the length of the tunnel which confirms our intuition. It however depends negatively on the speed limit, the slope, the HGV and the feature direction2 (which corresponds to having two-way traffic) which is quite unexpected. Indeed, one can expect that driving faster increases the number of accidents, as well as having a two-way traffic which involves more vehicles. A greater slope also intuitively would make the road more dangerous to drive and therefore increase the number of accidents. Finally, the number of accidents slighlty increases with the year, which corresponds to what one can see with basic descriptive statistics. This could intuitively correspond to the fact that the number of vehicles on the road increases every year. \
+
 ```{r poisson model residuals, echo=FALSE}
 plot(model$fitted.values, model$residuals)
 ```
 
-Both AIC `r model$AIC` and deviance `r model$deviance` are quite big. Our variables are significant at the usual 5%.\
+We can see from the residuals a banding pattern that is characteristic from the Poisson residuals. However, there are some outliers for the fitted values greater than 20 and residuals values greater than 10.\
 
-*TEST*
-```{r poisson model test, echo=FALSE}
-model_test <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV , family=poisson, data=Accidents_new)
-summary(model_test)
-plot(model_test$fitted.values, model_test$residuals)
-``` 
+Comment : Comment more
 
-*With random effects*\
+
+### With random effects
 We now want to adjust our Poisson model with random effects. As for the dataset Fires, we consider :\
   *random : Tunnel, Company, \
   *fixed : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV\
@@ -261,10 +262,17 @@ summary(m)
 plot(m)
 ```
 
+
 The residuals look homoscedastic which means that the model explains quite well the data.
 
+### PROBABLY DO NOT INCLUDE : scaling variables on the model without random effects
+```{r poisson model test, echo=FALSE}
+model_test <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV , family=poisson, data=Accidents_new)
+summary(model_test)
+plot(model_test$fitted.values, model_test$residuals)
+``` 
 
-*Negative binomial*\
+### Negative binomial
 With random effects \
 Still a problem with convergence... so... \
 ```{r negative binomial, echo=FALSE}
@@ -292,7 +300,7 @@ plot(model4)
 Here again the residuals are homoscedatic which gives us confidence in the model. All that could be explained has been explained. 
 
 
-*Conclusion*\
+# Conclusion
 If we consider models without random effects, the best Poisson model we can build in terms of AIC is the one with the following variables : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV. This model however has an AIC of 6065 which is quite enormous. \
 Without rescaling variables, one can fit a poisson mixed models with Tunnel and Company as random effects. This gives a smaller AIC which seems then to fit better our data. However, without rescaling, the model doesn't converge. \
 Finally, by rescaling the variables, we obtain a smaller AIC because we obtain a smaller likelihood and the model converges. \
