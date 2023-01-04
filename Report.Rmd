@@ -219,7 +219,8 @@ Thanks to this variable selection, we are now able to fit our Poisson model.
 model <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV + Year , family=poisson, data=Accidents)
 summary(model)
 ``` 
-The model equation we obtained is put below and is quite complicated. There are lots of explanatory variables, and the summary indicates that the AIC is of 6057.6 which is quite enormous. We can surely improve the model on this aspect by reducing the number of regressors. 
+
+The model equation we obtained is put below. 
 $$
 \ln(\mathbb{E}(Accidents)) = -51.286647 + 0.626838*\log(Traffic) + 0.582956*\log(Length) -0.018712*Limit -0.614479*Width -2.480020*Slope -0.867039*HGV + 0.020613 -0.139456*Direction2 + 0.947456*TypeUnidirectionnal +  0.886806*SlopeTypeBasin + 1.022039*SlopeTypeUnknown + 0.144215*SlopeTypeContinuous -0.590130*SlopeTypeRoof + 
 $$
@@ -238,23 +239,28 @@ Comment : Comment more maybe?
 
 
 ### With random effects
-As seen in the previous part, the model we fitted is not completely satisfying, with an AIC that is quite important, a lot of variables included in the regression with some counter-intuitive causal effects, and without taking in account the Tunnel and the Company. Therefore, we want to improve our Poisson model by adding random effects. As for the dataset Fires, we consider :\
+As seen in the previous part, the model we fitted is not completely satisfying, with a lot of variables included in the regression having some counter-intuitive causal effects; and because the model doesn't take in account the variables Tunnel and Company. Therefore, we want to improve our Poisson model by adding random effects. As for the dataset Fires, we consider :\
   *random effects : Tunnel, Company, \
   *fixed effects : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV\
 
-The model doesn't converge if we use the same variables as for the model without random effects. Indeed, by fitting the model with the exact same setup, we obtain with a mixed model that SlopeType isn't significant, nor HGV. We fit the model without those variables.\
+By fitting the model with the exact same setup, we obtain with a mixed model that SlopeType isn't significant, nor HGV. We fit the model without those variables.\
 
 ```{r mixed model without rescaled variables, echo=FALSE}
 library('lme4')
-model2 <- glmer(Acc~ log(Traffic) + Slope + log(Length) + Limit + Type + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents)
+model2 <- suppressWarnings(glmer(Acc~ log(Traffic) + Slope + log(Length) + Limit + Type + Year + Width + Direction + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents))
 suppressWarnings(summary(model2))
+
+
+model3 <- suppressWarnings(glmer(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV + Year+ (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents))
+summary(model3)
 ``` 
+
 
 ```{r mixed model without rescaled variables residuals, echo=FALSE}
 plot(model2)
 ```
 
-To avoid having a convergence problem, we rescale the variables and then perform the model. 
+To avoid having a convergence problem, we rescale the variables and then perform the model. By fitting the exact same model as before but on the new dataset with rescaled variables, we obtain that the company variance is $10^-8$ whereas the variance of tunnel is of $0.1$, so we finally fit the model without company as a random effect. 
 
 ```{r rescale and poisson mixed effects, echo=FALSE}
 Accidents_new <- transform(Accidents,
@@ -265,7 +271,7 @@ Accidents_new <- transform(Accidents,
     Width = scale(Width),
     Slope = scale(Slope))
 
-m<-glmer(Acc ~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents_new)
+m<-glmer(Acc ~ log(Traffic) + Slope + log(Length) + Limit + Type + (1 | Tunnel), family=poisson, data = Accidents_new)
 summary(m)
 ``` 
 
@@ -273,7 +279,7 @@ summary(m)
 plot(m)
 ```
 
-
+to comment 
 
 ### PROBABLY DO NOT INCLUDE : scaling variables on the model without random effects
 ```{r poisson model test, echo=FALSE}

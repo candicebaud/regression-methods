@@ -314,6 +314,20 @@ plot(model$fitted.values, model$residuals)
 ``` 
 
 
+## Nouveau 
+```{r poisson model, echo=FALSE}
+model <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV + Year , family=poisson, data=Accidents)
+summary(model)
+
+plot(density(resid(model, type='pearson')))
+a= sum(resid(model, type='pearson'))
+1-pchisq(a, model$df.residual)
+
+model$df.residual
+pchisq(28.6, 1146)
+``` 
+
+
 
 ## AUcun rapport, tirage pere noel secret
 
