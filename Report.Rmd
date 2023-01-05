@@ -180,22 +180,23 @@ To improve the model, we decide to fit a mixed model. The idea here is then to c
   *random : Tunnel, Company, 
   *fixed : log(Traffic), HGV, log(Length)\
   
-By fitting the mixed model on Tunnel and Company, we obtain that the variance of the variable Company is only of 0.05 which means including it as a random effect is not relevant. Moreover, the coefficients obtained with Company and without Company as a random effect are very close. In addition, the AIC slighlty improves by removing Company as a random effect, which leads us to build the model with only Tunnel as a random effect.
+By fitting the mixed model on Tunnel and Company, we obtain that the variance of the variable Company is only of 0.05 which means including it as a random effect is not relevant. Moreover, the coefficients obtained with Company and without Company as a random effect are very close. In addition, the AIC slighlty improves (362.2) by removing Company as a random effect, which leads us to build the model with only Tunnel as a random effect.
 
 ```{r Mixed model tunnel, echo=FALSE}
 library('lme4')
 mixed_model <- glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Tunnel ), data = Fires, family=poisson)
 summary(mixed_model)
 ```
-
+We obtain a model in which all the variables are statistically significant at the usual 5% level, and even at the 1% level. Traffic, HGV and Length have positive coefficients, which means that if they increase, the number of accidents increase (positive correlation). This seems intuitive since having more people on the road is likely to increase the number of Fires because they could be caused for example by a car crash (which should be more frequent when there are more cars, but we'll detail that in the next section). Length seems also intuitive for the same reason as Traffic. Finally, having more heavy vehicles should also increase the number of fires for two reasons :\
+* They transport more dangerous materials than regular cars
+* They are more likely to create severe accidents 
 
 ```{r Mixed model tunnel residuals, echo=FALSE}
 library("lme4")
 plot(mixed_model)
 ``` 
 
-TO DO : comment the results : comment is quite similar to without random effects but explained why the model with random effect is better
-
+The residuals have the usual shape for Poisson regressions. 
 ### Conclusion on the dataset Fires
 
 
