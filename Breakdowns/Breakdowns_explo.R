@@ -57,14 +57,16 @@ ggplot(Breakdowns, aes(x=Breakdowns))+
   geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
   geom_density(alpha=0.3, lwd=1)+
   xlab("Number of breakdowns")+
-  ggtitle("Repartition of Breakdowns")
+  ggtitle("Repartition of Breakdowns")+
+  theme(text = element_text(size = 20)) 
 dev.off()
 
 png(file="Breakdowns/plots/breakdowns_ycount.png", width=600, height=600)
 ggplot(Breakdowns, aes(x=Breakdowns))+
   geom_histogram(alpha=0.4, position="identity", lwd=0.1)+
   xlab("Number of breakdowns")+
-  ggtitle("Repartition of Breakdowns")
+  ggtitle("Repartition of Breakdowns")+
+  theme(text = element_text(size = 20)) 
 dev.off()
 
 # Correlation of parameters
