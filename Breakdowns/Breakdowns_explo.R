@@ -75,7 +75,7 @@ dev.off()
 # Best try
 png(file="Breakdowns/plots/breakdowns_corr.png", pointsize = 14, 
     width=800, height=800)
-suppressWarnings(pairs(~ Breakdowns + Traffic + HGV + Length + SlopeType + Limit + Company,
+suppressWarnings(pairs(~ Breakdowns + Traffic + HGV + Length + SlopeType + Limit,
                        data=mBreakdowns, upper.panel = panel.cor, diag.panel = panel.hist))
 dev.off()
 
