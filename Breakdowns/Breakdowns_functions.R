@@ -15,6 +15,21 @@ mBreakdowns <- function(){
   return(df)
 }
 
+# Modify scales of the data frame
+mBreakdowns2 <- function(){
+  df <- Breakdowns
+  # Change to factor
+  df$Year  <- as.factor(df$Year)
+  df$Limit <- as.factor(df$Limit)
+  # Change scale
+  df$Traffic <- df$Traffic/10^7
+  df$HGV     <- df$HGV*100
+  df$Slope   <- df$Slope*1000
+  df$Length  <- log10(df$Length)
+  return(df)
+}
+
+
 # Functions of Candice for correlograms
 panel.hist <- function(x, ...)
 {

@@ -11,7 +11,8 @@ source(file = "Breakdowns/Breakdowns_functions.R")
 load("Breakdowns/Breakdowns.RData")
 # Modify the data set so that it make sens --> explanation in "Breakdowns_functions.R"
 df <- mBreakdowns()
-
+dff <- mBreakdowns2()
+# dff$Traffic <- 10^df$Traffic/10^8 regarder le changement !!
 # Linear model ------------------------------------------------------------
 # The very first try is to fit a linear model. It is expected not to work well
 # since y=Breakdowns does not follow a Gaussian law.
@@ -25,7 +26,7 @@ summary(linearmodel)
 Poissonfull <- glm(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
                 Urban + Type  + SlopeType + Tunnel + Company, 
                 family="poisson", data=df)
-model1 <- step(Poissonfull, direction = 'backward')
+model <- step(Poissonfull, direction = 'backward')
 # Output: Step:  AIC=8514.27
 # Breakdowns ~ Year + HGV + Slope + Length + Direction + Tunnel
 # What about problem of high deviance ???? -->next part on glm.nb
@@ -35,7 +36,7 @@ model1 <- step(Poissonfull, direction = 'backward')
  # Poissonempty0 <- glm(Breakdowns ~ Traffic, family="poisson",data=df)
  Poissonempty <- glm(Breakdowns ~1,        family="poisson",data=df)
  
- model <- step(Poissonempty, scope = ~Year + Direction +Traffic + HGV + Slope +
+ model_e <- step(Poissonempty, scope = ~Year + Direction +Traffic + HGV + Slope +
                  Urban + Type + Length + Limit + SlopeType + Tunnel + Company,
                direction = 'forward')
  
@@ -46,6 +47,30 @@ model1 <- step(Poissonfull, direction = 'backward')
  # An important thing to notice here is that both backward and forward selection
  # based on AIC yields to the same choice of model :)
  
+
+# Second Poisson ----------------------------------------------------------
+ ### Backward selection of variables ######
+ Poissonfull2 <- glm(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
+                       Urban + Type  + SlopeType + Tunnel + Company, 
+                     family="poisson", data=df)
+ model2 <- step(Poissonfull, direction = 'backward') 
+ 
+ # Output : AIC=8507.42
+ # Breakdowns ~ Year + HGV + Slope + Traffic + Length + Direction + Tunnel
+ 
+ ### Forward selection of variables ######
+ Poissonempty <- glm(Breakdowns ~1,        family="poisson",data=dff)
+ 
+ model_e2 <- step(Poissonempty, scope = ~Year + Direction +Traffic + HGV + Slope +
+                   Urban + Type + Length + Limit + SlopeType + Tunnel + Company,
+                 direction = 'forward')
+ 
+ # Output:  Step:  AIC=8507.42
+ # Breakdowns ~ Tunnel + Slope + Year + HGV + Direction + Length + Traffic
+ 
+ # It seems that this improves a bit the model --> we will keep this one
+ 
 # Improvements ------------------------------------------------------------
- # To be complete
+ # In this section, we start from the optimal model to see if it can be improve
+ # it using a way to avoid overdispersion.
 
