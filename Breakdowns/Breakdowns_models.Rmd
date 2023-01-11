@@ -16,16 +16,6 @@ library(MASS)
 load("regression-methods/Data/Breakdowns.RData")
 ```
 
-# A bit of data exploration
-add plots to justify choices
-```{r visu-y}
-ggplot(Breakdowns, aes(x=Breakdowns))+
-  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
-  geom_density(alpha=0.3, lwd=1)+
-  ggtitle("Repartition of y")
-```
-
-
 # First models
 Some choices : 
 Random : Year, Companies, Tunnels
