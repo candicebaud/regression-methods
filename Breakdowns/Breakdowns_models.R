@@ -6,6 +6,7 @@ library('lme4')
 library(MASS)
 library(readr)
 library(GGally)
+library(DHARMa)
 source(file = "Breakdowns/Breakdowns_functions.R")
 # Loading data set --------------------------------------------------------
 load("Breakdowns/Breakdowns.RData")
@@ -34,6 +35,10 @@ model <- step(Poissonfull, direction = 'backward')
 # Residual deviance:  298.49  on  937  degrees of freedom
 # Slope seems to be significant, Limit maybe also
 
+# Here we do a simple check
+simResids <- simulateResiduals(model)
+plot(simResids)
+
 # What about problem of AIC = Inf  ???? -->next part on glm.nb
 # summary(model)
 
@@ -53,6 +58,9 @@ model <- step(Poissonfull, direction = 'backward')
  
  # What about the large AIC ? --> See next part
  # summary(model_e)
+ # Here we do a simple check
+ simResids <- simulateResiduals(model_e)
+ plot(simResids)
 
 
 # Poisson regression (2) ----------------------------------------------------
@@ -68,6 +76,9 @@ model <- step(Poissonfull, direction = 'backward')
    # Direction + Urban + Type + SlopeType + Tunnel
  # Residual deviance:  298.31  on  937  degrees of freedom
  # summary(model2)
+ # Here we do a simple check
+ simResids <- simulateResiduals(model2)
+ plot(simResids)
  
  ### Forward selection of variables ######
  Poissonempty2 <- glm(Breakdowns ~1,        family="poisson",data=dff)
@@ -81,6 +92,9 @@ model <- step(Poissonfull, direction = 'backward')
  # Residual deviance: 1106.2  on 1041  degrees of freedom -> 1106.2/1041 = 1.062632
  # Maybe I could have a model that suffers from over dispersion !!!
  # summary(model_e2)
+ # Here we do a simple check
+ simResids <- simulateResiduals(modele2)
+ plot(simResids)
  
  # Slightly better model than the with the previous choice of re-scaling parameters
  # --> we keep the one found using backward selection
@@ -102,6 +116,9 @@ model <- step(Poissonfull, direction = 'backward')
  # summary(nbmodel)
  # Output: Step:  AIC=6475.58
  # Breakdowns ~ Year + HGV + Slope + Direction + Tunnel
+ # Here we do a simple check
+ simResids <- simulateResiduals(nbmodel)
+ plot(simResids)
  
  ### Forward selection of variables ######
  nbempty <- glm.nb(Breakdowns ~ 1, data = dfnb)
@@ -111,8 +128,26 @@ model <- step(Poissonfull, direction = 'backward')
  
  # Output: Step:  AIC=6475.58
  # Breakdowns ~ Tunnel + Slope + Direction + Year + HGV
+ # Here we do a simple check
+ simResids <- simulateResiduals(nbmodel_e)
+ plot(simResids)
 
  # Both selections of variables based on AIC yields to the same model. 
  # We can notice that the deviance here is much higher than in the previous case.
  # The model achieved is yet much simpler -> which one to choose ?
  # Need to make diagnostics !
+ 
+# Including random effects ------------------------------------------------
+# As from now, we have seen that the model that seems fit the best the data is 
+ # the negative binomial one (QQ-plot is almost a strait line !). Deviance is still
+ # quite high, so we will try to reduce it by introducing random effects. In this 
+ # data set, Tunnel, Company and Year seems to be great canditates to randomness.
+ # Let's see.
+ 
+ nbrfull <- glmer.nb(Breakdowns ~ Slope + HGV + Direction + (1|Year)+ (1|Tunnel),
+                     data = dfnb)
+ # modelfullr <- step(nbrfull, direction = 'backward') 
+ 
+ # Here we do a simple check
+ simResids <- simulateResiduals(nbmodel_e)
+ plot(simResids)
