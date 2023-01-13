@@ -52,8 +52,6 @@ Figure 1 shows the distribution of the fires with a fitted poisson distribution,
 
 REMARK : I wanted to put them side by side with par but it doesn't seem to work. \
 ```{r exploratory, echo=FALSE}
-p<-data.frame(rpois(10000,mean(Fires$Fires)))
-
 panel.hist <- function(x, ...)
 {
   usr <- par("usr"); on.exit(par(usr))
@@ -77,6 +75,7 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
 
 par(mfrow=c(1,2)) 
 
+p<-data.frame(rpois(10000,mean(Fires$Fires)))
 ggplot(p,aes(x=p[,1]))+
   geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
   geom_density(alpha=0.3, lwd=1, bw=0.3)+
@@ -95,11 +94,19 @@ The accidents dataset gathers contains `r n_distinct(Ac$Tunnel)` tunnels ran by 
 Figure 2 shows the distribution of the fires with a fitted exponential distribution, and the most relevant correlations between the different variables. We chose to represent only the variables that had a correlation greater than 0.25 to make it more readable. \
 
 ```{r Accidents corr and fit, echo=FALSE}
+#exponential dist
 p<-data.frame(rexp(100,1/mean(Accidents$Acc)))
 ggplot(p,aes(x=p[,1]))+
   geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
   geom_density(alpha=0.5, lwd=1, bw=0.5)+
   ggtitle("exp(0.25)")
+
+
+p<-data.frame(rpois(10000,mean(Accidents$Acc)))
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.3, lwd=1, bw=0.3)+
+  ggtitle("Fitted poisson distribution")
 
 #function below can be erased if we keep the one above for Fires
 panel.hist <- function(x, ...)
@@ -204,7 +211,7 @@ The residuals have the usual shape for Poisson regressions.
 For the Accidents feature, we decided to model our data with a Poisson model, which was not rejected by our bootstrap algorithm. We started by doing a variable selection in the whole dataset which led to the model with only Tunnel and Company as relevant variables. This of course is not a plausible explanation of the causes of accidents, and the parameters such as the traffic, the speed limit, or number of lanes seem to have a greater causal effect. Thus, we decided to exclude Tunnel and Company variables to better fit the model in a first approach. In the second approach, we will extend this model by considering Tunnel and Company as random effects in a mixed model setup.
 
 ### Poisson model without the variables Tunnel and Company
-We first perform a forward and backward selection using the funtion *stepCriterion* from the package *glmtoolbox*. The final model includes the following variables : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV, Year. 
+We first perform a forward and backward selection using the function *stepCriterion* from the package *glmtoolbox*. The final model includes the following variables : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV, Year. 
 
 ```{r variable selection, echo=FALSE}
 library('glmtoolbox')
@@ -240,27 +247,48 @@ Comment : Comment more maybe?
 
 
 ### With random effects
-As seen in the previous part, the model we fitted is not completely satisfying, with a lot of variables included in the regression having some counter-intuitive causal effects; and because the model doesn't take in account the variables Tunnel and Company. Therefore, we want to improve our Poisson model by adding random effects. As for the dataset Fires, we consider :\
+As seen in the previous part, the model we fitted is not completely satisfying, with variables included in the regression having some counter-intuitive causal effects; and because the model doesn't take in account the variables Tunnel and Company. Therefore, we want to improve our Poisson model by adding random effects. As for the dataset Fires, we consider :\
   *random effects : Tunnel, Company, \
   *fixed effects : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV\
 
-By fitting the model with the exact same setup, we obtain with a mixed model that SlopeType isn't significant, nor HGV. We fit the model without those variables.\
+By fitting the model with the exact same setup, we obtain with a mixed model that SlopeType isn't significant, nor HGV. We fit hereafter the best model in terms of AIC which is the model with log(Traffic), log(Length), Slope, Type, Width. \
+
+
+```{r model selection test, echo=FALSE}
+library("cAIC4")
+mod1 <- lmer(Acc ~ log(Traffic) + log(Length) + (1|Company) + (1|Tunnel), data=Accidents)
+stepcAIC(mod1, groupCandidates=NULL, fixEfCandidates = c('Slope','Type', 'Width', 'HGV'), data=Accidents, trace=TRUE, direction="both", keep = list('Company','Tunnel'))
+```
+
 
 ```{r mixed model without rescaled variables, echo=FALSE}
 library('lme4')
-model2 <- suppressWarnings(glmer(Acc~ log(Traffic) + Slope + log(Length) + Limit + Type + Year + Width + Direction + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents))
-suppressWarnings(summary(model2))
-
-
-model3 <- suppressWarnings(glmer(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV + Year+ (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents))
-summary(model3)
+#log(Traffic) ok 5317
+#log(Traffic) + log(Length) ok 5309
+#log(Traffic) + log(Length) + Slope ok AIC 5297
+# avec limit pb
+#log(Traffic) + log(Length) + Slope + Type AIC 5294
+#avec HGV fail to converge
+#log(Traffic) + log(Length)  + HGV 5311
+#avec Year fail 
+#avec Direction fail 
+#log(Traffic) + log(Length) + Slope + Type + Width 5291
+#avec slopeType fail
+modeltest<- glmer(Acc~ log(Traffic) + log(Length) + Slope + Type + Width + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents)
+summary(modeltest)
 ``` 
+
+The summary gives an AIC of 5291 which is way better than our first model without random variables. Unlike for the dataset Fires, the tunnel and company variances are on the same scale so we keep both random effects. All the variables included are statistically significant at the usual 5% level. log(Traffic) and log(Length) have positive coefficients which is intuitive as explained before. Slope still has a negative coefficient which is counterintuitive, as well as Width. Finally the unidirectional type of road has a slightly positive coefficient. 
+
 
 
 ```{r mixed model without rescaled variables residuals, echo=FALSE}
-plot(model2)
+plot(modeltest)
 ```
 
+The residuals are typical from the Poisson models with a some overdispersion and some outliers. 
+
+# Partie à omettre très certainement avec beaucoup de tests 
 To avoid having a convergence problem, we rescale the variables and then perform the model. By fitting the exact same model as before but on the new dataset with rescaled variables, we obtain that the company variance is $10^-8$ whereas the variance of tunnel is of $0.1$, so we finally fit the model without company as a random effect. 
 
 ```{r rescale and poisson mixed effects, echo=FALSE}
@@ -282,14 +310,14 @@ plot(m)
 
 to comment 
 
-### PROBABLY DO NOT INCLUDE : scaling variables on the model without random effects
+
 ```{r poisson model test, echo=FALSE}
 model_test <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV , family=poisson, data=Accidents_new)
 summary(model_test)
 plot(model_test$fitted.values, model_test$residuals)
 ``` 
 
-### Negative binomial
+
 With random effects \
 Still a problem with convergence... so... \
 ```{r negative binomial, echo=FALSE}
