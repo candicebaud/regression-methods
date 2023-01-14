@@ -2,7 +2,7 @@
 
 # Libraries and files -----------------------------------------------------
 library(ggplot2)
-library('lme4')
+library("lme4")
 library(MASS)
 library(readr)
 library(GGally)
@@ -19,7 +19,7 @@ dff <- mBreakdowns2()
  linearmodel <- lm(formula = Breakdowns~., data = df)
  summary(linearmodel)
 # Most significant variables : Year, Direction,  HGV, Slope, Limit, some tunnels...
-# Multiple R-squared:  0.7842,	Adjusted R-squared:  0.7603
+# Multiple R-squared:  0.7843,	Adjusted R-squared:  0.7603
 
 # Poisson regression ------------------------------------------------------
 # Based on the first choice of changes in the scales of variables
@@ -32,12 +32,13 @@ model <- step(Poissonfull, direction = 'backward')
 # Output: Step:  AIC=Inf
 # Breakdowns ~ Year + HGV + Slope + Limit + Traffic + Length + 
   # Direction + Urban + Type + SlopeType + Tunnel
-# Residual deviance:  298.49  on  937  degrees of freedom
+# Residual deviance:  298.14  on  937  degrees of freedom
 # Slope seems to be significant, Limit maybe also
 
 # Here we do a simple check
 simResids <- simulateResiduals(model)
 plot(simResids)
+# This is very skewed...
 
 # What about problem of AIC = Inf  ???? -->next part on glm.nb
 # summary(model)
@@ -74,11 +75,12 @@ plot(simResids)
  # Output : Step:  AIC=Inf
  # Breakdowns ~ Year + HGV + Slope + Limit + Traffic + Length + 
    # Direction + Urban + Type + SlopeType + Tunnel
- # Residual deviance:  298.31  on  937  degrees of freedom
+ # Residual deviance:  297.96  on  937  degrees of freedom
  # summary(model2)
  # Here we do a simple check
  simResids <- simulateResiduals(model2)
  plot(simResids)
+ # This is very skewed
  
  ### Forward selection of variables ######
  Poissonempty2 <- glm(Breakdowns ~1,        family="poisson",data=dff)
@@ -101,6 +103,21 @@ plot(simResids)
  
  # It seems that this improves a bit the model --> we will keep this one
  
+
+# Including randomness ----------------------------------------------------
+ # TAKE MUCH TOO MUCH TIME TO COMPUTE....
+# In this Poisson set-up, we will see if adding any random effect could improve
+# the model and decrease deviance. In this data set, Tunnel, Company and Year 
+ # seems to be great candidates to randomness. A simple first comparison will be 
+ # to take the model selected by backward selection (model2) and see if by turning
+ # Year and Tunnel to random would increase or decrease deviance.
+ 
+ # rmodel2 <-glmer(Breakdowns ~ 1+(1|Tunnel),
+               # data = dff, family=poisson)
+ 
+ # Comparison with the previous model2
+ # anova(rmodel2,model2)
+ 
 # Negative binomial model -------------------------------------------------
  # We have previously notice a problem of over dispersion which could be solve 
  # by using a negative binomial model.
@@ -113,12 +130,14 @@ plot(simResids)
  nbfull <- glm.nb(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
                     Urban + Type  + SlopeType + Tunnel + Company, data = dfnb)
  nbmodel <- step(nbfull, direction = 'backward') 
- # summary(nbmodel)
+ summary(nbmodel)
  # Output: Step:  AIC=6475.58
  # Breakdowns ~ Year + HGV + Slope + Direction + Tunnel
+ # Residual deviance: 1196.3  on  939  degrees of freedom
  # Here we do a simple check
  simResids <- simulateResiduals(nbmodel)
  plot(simResids)
+ # Nice QQ-plot !!
  
  ### Forward selection of variables ######
  nbempty <- glm.nb(Breakdowns ~ 1, data = dfnb)
@@ -128,7 +147,9 @@ plot(simResids)
  
  # Output: Step:  AIC=6475.58
  # Breakdowns ~ Tunnel + Slope + Direction + Year + HGV
+ # Residual deviance: 1196.3  on  939  degrees of freedom
  # Here we do a simple check
+ # summary(nbmodel_e)
  simResids <- simulateResiduals(nbmodel_e)
  plot(simResids)
 
@@ -137,17 +158,51 @@ plot(simResids)
  # The model achieved is yet much simpler -> which one to choose ?
  # Need to make diagnostics !
  
+
+# Including cross-variables effects ---------------------------------------
+# As we had notice that some variables where correlated, we will try to add these 
+# relations in the model
+ nbfullc <- glm.nb(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
+                    Urban + Type  + SlopeType + Tunnel + Company + Traffic*HGV+
+                     Traffic*Length+ Traffic*SlopeType, data = dfnb)
+ nbmodelc <- step(nbfullc, direction = 'backward')
+ 
+ # Step:  AIC: 6477.6
+ # Breakdowns ~ Year + HGV + Slope + Traffic + Direction + SlopeType + 
+   # Tunnel + Traffic:SlopeType
+ # Residual deviance: 1197.7  on  935  degrees of freedom
+ summary(nbmodelc)
+ simResids <- simulateResiduals(nbmodelc)
+ plot(simResids)
+ # This model is almost the same in terms of performance as the one without cross-
+ # effects. We would prefer to keep the simplest one.
+ 
+ 
 # Including random effects ------------------------------------------------
 # As from now, we have seen that the model that seems fit the best the data is 
  # the negative binomial one (QQ-plot is almost a strait line !). Deviance is still
  # quite high, so we will try to reduce it by introducing random effects. In this 
- # data set, Tunnel, Company and Year seems to be great canditates to randomness.
+ # data set, Tunnel, Company and Year seems to be great candidates to randomness.
  # Let's see.
+ nb1 <- glm.nb(Breakdowns ~ 1 + Tunnel, data = dfnb)
+ nbrfull <- glmer.nb(Breakdowns ~ 1+(1|Tunnel), data = dfnb)
+ anova(nbrfull,nb1)
+ # Adding Tunnel as random seems not to improve significantly the model !
+ 
+ nb1 <- glm.nb(Breakdowns~1 + Year, data = dfnb)
+ nbrfull <- glmer.nb(Breakdowns ~ 1+(1|Year), data = dfnb)
+ anova(nbrfull,nb1)
+ # Adding Tunnel as random seems not to improve significantly the model !
  
  nbrfull <- glmer.nb(Breakdowns ~ Slope + HGV + Direction + (1|Year)+ (1|Tunnel),
                      data = dfnb)
  # modelfullr <- step(nbrfull, direction = 'backward') 
- 
+ summary(nbrfull)
+ # AIC : 6717.7, Deviance : 6703.7
+ # This yields to higher deviance than without random effects, we won't keep them
+ # as random.
  # Here we do a simple check
- simResids <- simulateResiduals(nbmodel_e)
+ simResids <- simulateResiduals(nbrfull)
  plot(simResids)
+ # Adding random effect does not seem to improve the model. we keep all variables
+ # as fixed ones !

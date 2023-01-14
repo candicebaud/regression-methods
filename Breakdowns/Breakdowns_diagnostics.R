@@ -14,8 +14,6 @@ load("Breakdowns/Breakdowns.RData")
 df <- mBreakdowns()
 dff <- mBreakdowns2()
 dfnb <- mBreakdowns2nb()
-
-
 # Linear model ------------------------------------------------------------
 linearmodel <- lm(formula = Breakdowns~., data = df)
 # Checking linearity
@@ -64,3 +62,10 @@ plot(nbmodel$fitted.values,abs(nbmodel$residuals))
 qqnorm(nbmodel$residuals, pch = 1, frame = FALSE)
 qqline(nbmodel$residuals, col = "red", lwd = 2)
 
+# Including cross-variables effects ---------------------------------------
+# As we had notice that some variables where correlated, we will try to add these 
+# relations in the model
+nbfullc <- glm.nb(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
+                    Urban + Type  + SlopeType + Tunnel + Company + Traffic*HGV+
+                    Traffic*Length+ Traffic*SlopeType, data = dfnb)
+nbmodelc <- step(nbfullc, direction = 'backward')
