@@ -118,7 +118,7 @@ m2 <- glm(Fires ~ log(Traffic) + HGV + log(Length), family="poisson", data=Fires
 summary(m2)
 
 par(mfrow=c(2,2)) 
-plot(model)
+plot(m2)
 ``` 
 
 *Random effects*
