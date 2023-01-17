@@ -9,6 +9,7 @@ library(MASS)
 library(readr)
 library(GGally)
 source(file = "Breakdowns/Breakdowns_functions.R")
+source(file = "explo_diag_functions.R")
 # Loading data set --------------------------------------------------------
 load("Breakdowns/Breakdowns.RData")
 # Data visualisation ------------------------------------------------------
