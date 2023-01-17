@@ -11,7 +11,6 @@ source(file = "explo_diag_functions.R")
 # Loading data set --------------------------------------------------------
 load("Accidents/Accidents.RData")
 # Data visualisation ------------------------------------------------------
-
 # Repartition of the response variable y
 png(file="Accidents/plots/accidents_ydensityc.png", width=600, height=600)
 p<-data.frame(rexp(100,1/mean(Accidents$Acc)))
