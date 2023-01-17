@@ -230,6 +230,7 @@ Below I dropped Urban and SlopeType to avoid multicollinearity but I still have 
 ```{r mixed model by year and company and tunnel, echo=FALSE}
 summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit  + Width + (1 | Year) + (1|Company) + (1|Tunnel), family=Gamma(link='log'), data = Accidents))
 ``` 
+
 ## Trying to fix my mixed models 
 *correlation of the fixed effects*
 ```{r correlation of fixed effects, echo = FALSE}
@@ -250,25 +251,25 @@ summary(glmer((Acc+1) ~ log(Traffic) + HGV + Urban + Type + log(Length) + Limit 
 #install.packages("remotes")
 #remotes::install_github("timnewbold/StatisticalModels")
 #library('StatisticalModels')
-test <- GLMERSelect(responseVar = Acc, fitFamily=poisson, randomStruct = "(1|Company)+(1|Tunnel)", modelData = Accidents)
+#test <- GLMERSelect(responseVar = Acc, fitFamily=poisson, randomStruct = "(1|Company)+(1|Tunnel)", modelData = Accidents)
 ``` 
 
 ## rescaling\
 On voit rien... \
 ```{r, echo=FALSE}
-library('ggplot2')
-ggplot(Accidents_new,aes(x=Company,y=Acc,col=Company)) + geom_jitter() + geom_boxplot(alpha=0.2) + facet_wrap(~Company)
+#library('ggplot2')
+#ggplot(Accidents_new,aes(x=Company,y=Acc,col=Company)) + geom_jitter() + geom_boxplot(alpha=0.2) + facet_wrap(~Company)
 
 ```
 
 variable selection
 
 ```{r var selection}
-library('MuMIn')
+#library('MuMIn')
 
-model <- glmer(Acc ~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents_new)
+#model <- glmer(Acc ~ log(Traffic) + log(Length) + Limit + Type + Width + Direction + Slope + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents_new)
 
-mumindd <- dredge(model)
+#mumindd <- dredge(model)
 
 ```
 
@@ -287,9 +288,9 @@ summary(m)
 ``` 
 
 ```{r selection, echo=FALSE}
-library('glmtoolbox')
-full <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope  + Type + log(Length) + Limit + SlopeType + Width + Lanes, family=poisson, data=Accidents_new)
-stepCriterion(full, criterion = 'aic', direction = c('forward', 'backward'))
+#library('glmtoolbox')
+#full <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope  + Type + log(Length) + Limit + SlopeType + Width + Lanes, family=poisson, data=Accidents_new)
+#stepCriterion(full, criterion = 'aic', direction = c('forward', 'backward'))
 ``` 
 
 
@@ -303,8 +304,9 @@ summary(model)
 plot(model$fitted.values, model$residuals)
 
 ``` 
+
 With random and fixed effects : it doesn't converge 
-```{r negative binomial, echo=FALSE}
+```{r negative binomial 2, echo=FALSE}
 
 model_rd <- glmer.nb(Acc ~ log(Traffic) + Urban + Type + log(Length) + Limit  + Width + (1 | Year) + (1|Company) + (1|Tunnel), data = Accidents)
 summary(model_rd)
