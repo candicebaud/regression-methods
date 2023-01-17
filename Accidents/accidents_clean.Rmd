@@ -109,7 +109,7 @@ Accidents%>% group_by(Year, Acc)%>% summarise(number=n())%>% mutate(nb_acc = num
   ggplot(aes(x=Year, y=nb_acc)) + geom_bar(stat = 'identity')
 ```
 
-Let's look at the Urban variable. We can see that most accidents occurr in an urban environment. 
+Let's look at the Urban variable. We can see that most accidents occure in an urban environment. 
 ```{r urban, echo=FALSE}
 Accidents%>%group_by(Urban, Acc)%>% summarise(number=n())%>%mutate(nb_acc=number*Acc)%>% 
   ggplot(aes(x=Urban, y=nb_acc)) + geom_bar(stat='identity')
