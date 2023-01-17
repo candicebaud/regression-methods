@@ -328,15 +328,3 @@ pchisq(28.6, 1146)
 ``` 
 
 
-
-## AUcun rapport, tirage pere noel secret
-
-```{r}
-l = c('Oliver', 'Thomas', 'Emilie', 'Candice')
-
-sample(l, 2, replace=FALSE)
-```
-Emilie -> candice
-Oliver ->Emilie
-Candice -> Thomas 
-Thomas ->Oliver
