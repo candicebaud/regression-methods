@@ -15,27 +15,6 @@ df <- mBreakdowns()
 dff <- mBreakdowns2()
 dfnb <- mBreakdowns2nb()
 
-# Functions ---------------------------------------------------------------
-#For all models
-checklinearity<- function(fitted, residual){
-  ggplot(data.frame(x = fitted, y =residual), aes(x=x, y=y))+
-    geom_point(color = "blue", alpha = 0.4, size =0.8)+
-    xlim(0,30)+
-    xlab("Fitted values")+
-    ylab("Residuals")+
-    ggtitle("Residuals vs fitted values")
-}
-
-checkvariance <- function(fitted, residual){
-  checklinearity(fitted, abs(residual))
-}
-
-# QQ-plots for poisson
-# qqplotpoisson <- function(){} --> faire un normal qq ?
-
-# QQ-plots for negative binomial
-qqplotnegbin  <- function(){}
-
 # Negative binomial model -------------------------------------------------
 nbmodel <- glm.nb(Breakdowns ~ Tunnel + Slope + Direction + Year + HGV, data = dfnb) 
 
@@ -47,9 +26,8 @@ checklinearity(nbmodel$fitted.values,nbmodel$residuals)
 # Checking the variance
 checkvariance(nbmodel$fitted.values,nbmodel$residuals)
 
-# QQ-plot --> to change !
-qqnorm(nbmodel$residuals, pch = 1, frame = FALSE)
-qqline(nbmodel$residuals, col = "red", lwd = 2)
+# QQ-plot
+qqplot(nbmodel)
 
 # Poisson regression ------------------------------------------------------
 poissonmodel <- glm(Breakdowns ~ Year + HGV + Slope + Limit + Traffic + Length + 

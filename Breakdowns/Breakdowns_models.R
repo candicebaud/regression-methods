@@ -80,6 +80,7 @@ plot(simResids)
  # Here we do a simple check
  simResids <- simulateResiduals(model2)
  plot(simResids)
+ 
  # This is very skewed
  
  ### Forward selection of variables ######

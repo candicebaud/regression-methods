@@ -5,7 +5,10 @@
 # But if X~Poisson, then E[X]=Var[X]. A simple transformation allows us to solve
 # this problem.
 
-# Functions ---------------------------------------------------------------
+
+# Libraries and files -----------------------------------------------------
+library(DHARMa)
+# Modify scales ---------------------------------------------------------------
 # Modify scales of the data frame
 mBreakdowns <- function(){
   df <- Breakdowns
@@ -52,7 +55,7 @@ mBreakdowns2nb <- function(){
   df$Length  <- df$Length/100
   return(df)
 }
-
+# Data exploration --------------------------------------------------------
 
 # Functions of Candice for correlograms
 panel.hist <- function(x, ...)
@@ -75,3 +78,25 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
   if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
   text(0.5, 0.5, txt, cex = cex.cor * r)
 }
+
+# Diagnostics -------------------------------------------------------------
+#For all models
+checklinearity<- function(fitted, residual){
+  ggplot(data.frame(x = fitted, y =residual), aes(x=x, y=y))+
+    geom_point(color = "blue", alpha = 0.4, size =0.8)+
+    xlim(0,30)+
+    xlab("Fitted values")+
+    ylab("Residuals")+
+    ggtitle("Residuals vs fitted values")
+}
+
+checkvariance <- function(fitted, residual){
+  checklinearity(fitted, abs(residual))
+}
+# From the package DHARMa
+qqplot  <- function(modelx){
+  simResids <- simulateResiduals(modelx)
+  plotQQunif(simResids)
+}
+
+
