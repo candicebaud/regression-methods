@@ -25,7 +25,7 @@ setwd("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/projec
 load("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project/Accidents.RData")
 
 ```
-
+   
 ## Introduction
 This report describes an analysis of the database "Accidents", in which the data was simulated based on a real dataset of events in French motorway tunnels. Here, we focus on modelling the accidents.
 

@@ -23,7 +23,7 @@ load("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project
 
 ## Introduction
 This report describes an analysis of the database "Accidents", in which the data was simulated based on a real dataset of events in French motorway tunnels. Here, we focus on modelling the accidents.
-
+   
 
 ## Exploration 
 First, let's look at the data and try to fit a model to our data distribution. 
