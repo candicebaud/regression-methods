@@ -233,11 +233,6 @@ plot(modeltest)
 ```
 
 
-## Conclusion on the dataset Accidents
-If we consider models without random effects, the best Poisson model we can build in terms of AIC is the one with the following variables : log(Traffic), SlopeType, log(Length), Limit, Type, Width, Direction, Slope, HGV, Year. This model however has an AIC of 6065 which is quite enormous. It includes a lot of variables and doesn't take in account the variables Tunnel and Company. \
-Without rescaling variables, one can fit a poisson mixed models with Tunnel and Company as random effects. This gives a smaller AIC which seems then to fit better our data. However, without rescaling, the model doesn't converge. \
-Finally, by rescaling the variables, we obtain a smaller AIC because we obtain a smaller likelihood due to the rescaling and the model converges. \
-
 ## Breakdowns
 
 
