@@ -75,17 +75,15 @@ suppressWarnings(pairs(~ Fires + Traffic + HGV + Length + SlopeType + Type + Com
 ## Description of Accidents dataset
 ```{r Accidents corr and fit, echo=FALSE}
 #exponential dist
-p<-data.frame(rexp(100,1/mean(Accidents$Acc)))
-ggplot(p,aes(x=p[,1]))+
-  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
-  geom_density(alpha=0.5, lwd=1, bw=0.5)+
-  ggtitle("exp(0.25)")
+#p<-data.frame(rexp(100,1/mean(Accidents$Acc)))
+#ggplot(p,aes(x=p[,1]))+ geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+ geom_density(alpha=0.5, lwd=1, bw=0.5)+ ggtitle("exp(0.25)")
 
 
 p<-data.frame(rpois(10000,mean(Accidents$Acc)))
 ggplot(p,aes(x=p[,1]))+
   geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
   geom_density(alpha=0.3, lwd=1, bw=0.3)+
+  xlab("Number of accidents") + ylab("density") + 
   ggtitle("Fitted poisson distribution")
 
 #function below can be erased if we keep the one above for Fires
@@ -141,7 +139,7 @@ $$
 \ln(\mathbb{E}(Fires)) = -27.70 + 1.178*\log(Traffic) +6.386*HGV + 0.6967*\log(Length) -1.19*10**9*Traffic
 $$
 ```{r residuals model, echo=FALSE}
-plot(m2$fitted.values, m2$residuals)
+plot(m2$fitted.values, m2$residuals, col='black', xlab = 'Fitted values', ylab='Residuals', main='Residuals')
 ```
 
 ### Poisson mixed model
@@ -153,18 +151,17 @@ summary(mixed_model)
 
 ```{r Mixed model tunnel residuals, echo=FALSE}
 library("lme4")
-plot(mixed_model)
+plot(mixed_model, col='black', xlab = 'Fitted values', ylab='Residuals', main='Residuals')
 ``` 
 
 ## Accidents
 ### Poisson model without the variables Tunnel and Company
-
+First we rescale the variable to have mean=variance. 
 ```{r rescale variable accidents, echo=FALSE}
 Accidents <- Accidents %>% mutate(
   Acc_sc = 0.5*sqrt(Accidents$Acc)
 )
 
-summary(Accidents$Acc_sc)
 #We have that the mean is different than the standard deviation so we want to equalize them to apply the poisson model
 #y <- Accidents$Acc
 #y_prime <- 0.5*sqrt(y)
@@ -176,11 +173,10 @@ summary(Accidents$Acc_sc)
 
 ```{r variable selection, echo=FALSE}
 library('glmtoolbox')
-fullmodel <- glm(Acc_sc ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes + Year, family=poisson, data=Accidents)
-summary(fullmodel)
+fullmodel <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes + Year, family=poisson, data=Accidents)
 
-fullmodel2 <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes + Year, family=poisson, data=Accidents)
-summary(fullmodel2)
+#fullmodel2 <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes + Year, family=poisson, data=Accidents)
+#summary(fullmodel2)
 
 
 stepCriterion(fullmodel, criterion = 'aic', direction = c('forward', 'backward'))
@@ -198,7 +194,7 @@ $$
 $$
 
 ```{r poisson model residuals, echo=FALSE}
-plot(model$fitted.values, model$residuals)
+plot(model$fitted.values, model$residuals, col='black', xlab = 'Fitted values', ylab='Residuals', main='Residuals')
 ```
 
 ### Poisson model with random effects
@@ -229,7 +225,7 @@ summary(modeltest)
 
 
 ```{r mixed model without rescaled variables residuals, echo=FALSE}
-plot(modeltest)
+plot(modeltest, col='black', xlab = 'Fitted values', ylab='Residuals', main='Residuals')
 ```
 
 
