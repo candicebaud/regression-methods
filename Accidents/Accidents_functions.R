@@ -13,6 +13,7 @@ mAccidents <- function(){
   # Change to factor
   df$Year  <- as.factor(df$Year/10^2) #We also need to rescale this one
   df$Limit <- as.factor(df$Limit/10)
+  df$Lanes <- as.factor(df$Lanes)
   # Change scale
   df$Acc <- 0.5*sqrt(df$Acc)
   df$Traffic <- log10(df$Traffic)
@@ -28,6 +29,7 @@ mAccidents2 <- function(){
   # Change to factor
   df$Year  <- as.factor(df$Year/10^2) #We also need to rescale this one
   df$Limit <- as.factor(df$Limit/10)
+  df$Lanes <- as.factor(df$Lanes)
   # Change scale
   df$Acc <- 0.5*sqrt(df$Acc)
   df$Traffic <- df$Traffic/10^7 #Only change with the previous adjustments
@@ -46,6 +48,7 @@ mAccidents2nb <- function(){
   # Change to factor
   df$Year  <- as.factor(df$Year/10^2) #We also need to rescale this one
   df$Limit <- as.factor(df$Limit/10)
+  df$Lanes <- as.factor(df$Lanes)
   # Change scale
   df$Traffic <- df$Traffic/10^7 #Only change with the previous adjustments
   df$HGV     <- df$HGV*100
