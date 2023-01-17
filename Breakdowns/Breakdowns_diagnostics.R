@@ -14,25 +14,47 @@ load("Breakdowns/Breakdowns.RData")
 df <- mBreakdowns()
 dff <- mBreakdowns2()
 dfnb <- mBreakdowns2nb()
-# Linear model ------------------------------------------------------------
-linearmodel <- lm(formula = Breakdowns~., data = df)
+
+# Functions ---------------------------------------------------------------
+#For all models
+checklinearity<- function(fitted, residual){
+  ggplot(data.frame(x = fitted, y =residual), aes(x=x, y=y))+
+    geom_point(color = "blue", alpha = 0.4, size =0.8)+
+    xlim(0,30)+
+    xlab("Fitted values")+
+    ylab("Residuals")+
+    ggtitle("Residuals vs fitted values")
+}
+
+checkvariance <- function(fitted, residual){
+  checklinearity(fitted, abs(residual))
+}
+
+# QQ-plots for poisson
+# qqplotpoisson <- function(){} --> faire un normal qq ?
+
+# QQ-plots for negative binomial
+qqplotnegbin  <- function(){}
+
+# Negative binomial model -------------------------------------------------
+nbmodel <- glm.nb(Breakdowns ~ Tunnel + Slope + Direction + Year + HGV, data = dfnb) 
+
+plot(nbmodel$fitted.values,nbmodel$residuals)
+glm.diag.plots(nbmodel)
 # Checking linearity
-# plot(x = df$Traffics,y=linearmodel$residuals)
-plot(linearmodel$fitted.values,linearmodel$residuals)
+checklinearity(nbmodel$fitted.values,nbmodel$residuals)
+
 # Checking the variance
-plot(linearmodel$fitted.values,abs(linearmodel$residuals))
+checkvariance(nbmodel$fitted.values,nbmodel$residuals)
 
-
-# QQ-plot
-qqnorm(linearmodel$residuals, pch = 1, frame = FALSE)
-qqline(linearmodel$residuals, col = "red", lwd = 2)
+# QQ-plot --> to change !
+qqnorm(nbmodel$residuals, pch = 1, frame = FALSE)
+qqline(nbmodel$residuals, col = "red", lwd = 2)
 
 # Poisson regression ------------------------------------------------------
-Poissonfull2 <- glm(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
-                      Urban + Type  + SlopeType + Tunnel + Company, 
+poissonmodel <- glm(Breakdowns ~ Year + HGV + Slope + Limit + Traffic + Length + 
+                    Direction + Urban + Type + SlopeType + Tunnel, 
                     family="poisson", data=dff)
-poissonmodel <- step(Poissonfull2, direction = 'backward')
-
 # Diagnostics
 plot(poissonmodel$fitted.values,poissonmodel$residuals)
 glm.diag.plots(poissonmodel)
@@ -45,27 +67,15 @@ plot(poissonmodel$fitted.values,abs(poissonmodel$residuals))
 qqnorm(poissonmodel$residuals, pch = 1, frame = FALSE, qtype = )
 qqline(poissonmodel$residuals, col = "red", lwd = 2)
 
+# Linear model ------------------------------------------------------------
+# linearmodel <- lm(formula = Breakdowns~., data = df)
+# # Checking linearity
+# # plot(x = df$Traffics,y=linearmodel$residuals)
+# plot(linearmodel$fitted.values,linearmodel$residuals)
+# # Checking the variance
+# plot(linearmodel$fitted.values,abs(linearmodel$residuals))# 
+# 
+# # QQ-plot
+# qqnorm(linearmodel$residuals, pch = 1, frame = FALSE)
+# qqline(linearmodel$residuals, col = "red", lwd = 2)
 
-# Negative binomial model -------------------------------------------------
-nbfull  <- glm.nb(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
-                   Urban + Type  + SlopeType + Tunnel + Company, data = dfnb)
-nbmodel <- step(nbfull, direction = 'backward') 
-
-plot(nbmodel$fitted.values,nbmodel$residuals)
-glm.diag.plots(nbmodel)
-# Checking linearity
-plot(nbmodel$fitted.values,nbmodel$residuals)
-# Checking the variance
-plot(nbmodel$fitted.values,abs(nbmodel$residuals))
-
-# QQ-plot --> to change !
-qqnorm(nbmodel$residuals, pch = 1, frame = FALSE)
-qqline(nbmodel$residuals, col = "red", lwd = 2)
-
-# Including cross-variables effects ---------------------------------------
-# As we had notice that some variables where correlated, we will try to add these 
-# relations in the model
-nbfullc <- glm.nb(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
-                    Urban + Type  + SlopeType + Tunnel + Company + Traffic*HGV+
-                    Traffic*Length+ Traffic*SlopeType, data = dfnb)
-nbmodelc <- step(nbfullc, direction = 'backward')

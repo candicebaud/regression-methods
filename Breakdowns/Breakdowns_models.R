@@ -16,8 +16,8 @@ dff <- mBreakdowns2()
 # Linear model ------------------------------------------------------------
 # The very first try is to fit a linear model. It is expected not to work well
 # since y=Breakdowns does not follow a Gaussian law.
- linearmodel <- lm(formula = Breakdowns~., data = df)
- summary(linearmodel)
+# linearmodel <- lm(formula = Breakdowns~., data = df)
+# summary(linearmodel)
 # Most significant variables : Year, Direction,  HGV, Slope, Limit, some tunnels...
 # Multiple R-squared:  0.7843,	Adjusted R-squared:  0.7603
 
@@ -160,49 +160,54 @@ plot(simResids)
  
 
 # Including cross-variables effects ---------------------------------------
-# As we had notice that some variables where correlated, we will try to add these 
-# relations in the model
- nbfullc <- glm.nb(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
-                    Urban + Type  + SlopeType + Tunnel + Company + Traffic*HGV+
-                     Traffic*Length+ Traffic*SlopeType, data = dfnb)
- nbmodelc <- step(nbfullc, direction = 'backward')
  
- # Step:  AIC: 6477.6
- # Breakdowns ~ Year + HGV + Slope + Traffic + Direction + SlopeType + 
-   # Tunnel + Traffic:SlopeType
- # Residual deviance: 1197.7  on  935  degrees of freedom
- summary(nbmodelc)
- simResids <- simulateResiduals(nbmodelc)
- plot(simResids)
- # This model is almost the same in terms of performance as the one without cross-
- # effects. We would prefer to keep the simplest one.
+  # This model is almost the same in terms of performance as the one without cross-
+  # effects. We would prefer to keep the simplest one.
  
- 
+# # As we had notice that some variables where correlated, we will try to add these 
+# # relations in the model
+#  nbfullc <- glm.nb(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
+#                     Urban + Type  + SlopeType + Tunnel + Company + Traffic*HGV+
+#                      Traffic*Length+ Traffic*SlopeType, data = dfnb)
+#  nbmodelc <- step(nbfullc, direction = 'backward')
+#  
+#  # Step:  AIC: 6477.6
+#  # Breakdowns ~ Year + HGV + Slope + Traffic + Direction + SlopeType + 
+#    # Tunnel + Traffic:SlopeType
+#  # Residual deviance: 1197.7  on  935  degrees of freedom
+#  summary(nbmodelc)
+#  simResids <- simulateResiduals(nbmodelc)
+#  plot(simResids)
+
 # Including random effects ------------------------------------------------
-# As from now, we have seen that the model that seems fit the best the data is 
- # the negative binomial one (QQ-plot is almost a strait line !). Deviance is still
- # quite high, so we will try to reduce it by introducing random effects. In this 
- # data set, Tunnel, Company and Year seems to be great candidates to randomness.
- # Let's see.
- nb1 <- glm.nb(Breakdowns ~ 1 + Tunnel, data = dfnb)
- nbrfull <- glmer.nb(Breakdowns ~ 1+(1|Tunnel), data = dfnb)
- anova(nbrfull,nb1)
- # Adding Tunnel as random seems not to improve significantly the model !
  
- nb1 <- glm.nb(Breakdowns~1 + Year, data = dfnb)
- nbrfull <- glmer.nb(Breakdowns ~ 1+(1|Year), data = dfnb)
- anova(nbrfull,nb1)
- # Adding Tunnel as random seems not to improve significantly the model !
+# This had not significantly improved the model : we will therefore keep it simple
+# and keep all variables as fixed effects !!!
  
- nbrfull <- glmer.nb(Breakdowns ~ Slope + HGV + Direction + (1|Year)+ (1|Tunnel),
-                     data = dfnb)
- # modelfullr <- step(nbrfull, direction = 'backward') 
- summary(nbrfull)
- # AIC : 6717.7, Deviance : 6703.7
- # This yields to higher deviance than without random effects, we won't keep them
- # as random.
- # Here we do a simple check
- simResids <- simulateResiduals(nbrfull)
- plot(simResids)
- # Adding random effect does not seem to improve the model. we keep all variables
- # as fixed ones !
+# # As from now, we have seen that the model that seems fit the best the data is 
+#  # the negative binomial one (QQ-plot is almost a strait line !). Deviance is still
+#  # quite high, so we will try to reduce it by introducing random effects. In this 
+#  # data set, Tunnel, Company and Year seems to be great candidates to randomness.
+#  # Let's see.
+#  nb1 <- glm.nb(Breakdowns ~ 1 + Tunnel, data = dfnb)
+#  nbrfull <- glmer.nb(Breakdowns ~ 1+(1|Tunnel), data = dfnb)
+#  anova(nbrfull,nb1)
+#  # Adding Tunnel as random seems not to improve significantly the model !
+#  
+#  nb1 <- glm.nb(Breakdowns~1 + Year, data = dfnb)
+#  nbrfull <- glmer.nb(Breakdowns ~ 1+(1|Year), data = dfnb)
+#  anova(nbrfull,nb1)
+#  # Adding Tunnel as random seems not to improve significantly the model !
+#  
+#  nbrfull <- glmer.nb(Breakdowns ~ Slope + HGV + Direction + (1|Year)+ (1|Tunnel),
+#                      data = dfnb)
+#  # modelfullr <- step(nbrfull, direction = 'backward') 
+#  summary(nbrfull)
+#  # AIC : 6717.7, Deviance : 6703.7
+#  # This yields to higher deviance than without random effects, we won't keep them
+#  # as random.
+#  # Here we do a simple check
+#  simResids <- simulateResiduals(nbrfull)
+#  plot(simResids)
+#  # Adding random effect does not seem to improve the model. we keep all variables
+#  # as fixed ones !
