@@ -83,7 +83,7 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
 #For all models
 checklinearity<- function(fitted, residual){
   ggplot(data.frame(x = fitted, y =residual), aes(x=x, y=y))+
-    geom_point(color = "blue", alpha = 0.4, size =0.8)+
+    geom_point(color = "black", alpha = 0.4, size =0.8)+
     xlim(0,30)+
     xlab("Fitted values")+
     ylab("Residuals")+
@@ -98,5 +98,3 @@ qqplot  <- function(modelx){
   simResids <- simulateResiduals(modelx)
   plotQQunif(simResids)
 }
-
-
