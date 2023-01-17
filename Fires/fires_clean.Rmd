@@ -17,7 +17,7 @@ lapply(c("dplyr","chron","ggplot2","tidyr","questionr","survival","forcats",
        library, character.only=TRUE)
 
 Sys.setlocale("LC_TIME", "English")
-setwd("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project")
+ setwd("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project/regression-methods/Fires")
 load("C:/Users/candi/Desktop/ETUDES/EPFL1A/semestre 1/regression methods/project/Fires.RData")
 ```
 
