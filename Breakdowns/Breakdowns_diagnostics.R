@@ -10,6 +10,7 @@ library(boot)
 library(glmmTMB)
 library(performance)
 source(file = "Breakdowns/Breakdowns_functions.R")
+source(file = "explo_diag_functions.R")
 # Loading data set --------------------------------------------------------
 load("Breakdowns/Breakdowns.RData")
 # Modify the data set so that it make sense --> explanations in "Breakdowns_functions.R"
@@ -27,7 +28,7 @@ check_outliers(nbmodel)
 png(file="Breakdowns/plots/breakdowns_diagnostics.png", width=600, height=600)
 glm.diag.plots(nbmodel)
 dev.off()
-
+# Some other diagnostics, not to add in the final report.
 # Checking linearity
 checklinearity(nbmodel$fitted.values,nbmodel$residuals)
 
