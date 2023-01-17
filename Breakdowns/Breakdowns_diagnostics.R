@@ -24,7 +24,9 @@ check_overdispersion(nbmodel)
 check_outliers(nbmodel)
 
 # Diagnostics
+png(file="Breakdowns/plots/breakdowns_diagnostics.png", width=600, height=600)
 glm.diag.plots(nbmodel)
+dev.off()
 
 # Checking linearity
 checklinearity(nbmodel$fitted.values,nbmodel$residuals)
