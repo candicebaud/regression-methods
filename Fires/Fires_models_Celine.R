@@ -10,33 +10,9 @@ library(GGally)
 library(boot)
 library(glmmTMB)
 library(performance)
+source(file="Fires/Fires_functions.R")
 # Loading data ------------------------------------------------------------
 load("Fires/Fires.RData")
-# Functions ---------------------------------------------------------------
-mFires <- function(){
-  df <- Fires
-  # Change to factor
-  df$Limit <- as.factor(df$Limit/10)
-  # Change scale
-  df$Traffic <- df$Traffic/10^7
-  df$HGV     <- df$HGV*100
-  df$Slope   <- df$Slope*1000
-  df$Length  <- df$Length/100
-  return(df)
-}
-
-mFires2 <- function(){
-  df <- Fires
-  # Change to factor
-  df$Limit <- as.factor(df$Limit/10)
-  # Change scale
-  df$Fires <- 0.5*sqrt(df$Fires)
-  df$Traffic <- df$Traffic/10^7
-  df$HGV     <- df$HGV*100
-  df$Slope   <- df$Slope*1000
-  df$Length  <- df$Length/100
-  return(df)
-}
 # Models ------------------------------------------------------------------
 df <- mFires()
 dff <- mFires2()
@@ -49,13 +25,13 @@ summary(m0)
 
 # Test of dispersion
 check_overdispersion(m0)
-# Overdispersion test
+# Over dispersion test
 
 # dispersion ratio =   1.222
 # Pearson's Chi-Squared = 202.871
 #                 p-value =   0.027
 # 
-# Overdispersion detected. --> and this is an issue !
+# Over dispersion detected. --> and this is an issue !
 
 simResids <- simulateResiduals(m0)
 plot(simResids)
