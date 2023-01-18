@@ -1,5 +1,5 @@
 # In this file we proceed to all computations related to explorations on the 
-# Breakdows data set.
+# Breakdowns data set.
 
 
 # Libraries and files -----------------------------------------------------
@@ -24,6 +24,20 @@ ggplot(Breakdowns, aes(x=Breakdowns))+
   xlab("Number of breakdowns")+
   ggtitle("Repartition of Breakdowns")+
   theme(text = element_text(size = 20)) 
+dev.off()
+
+
+sim<- rpois(length(Breakdowns$Breakdowns), mean(Breakdowns$Breakdowns))
+df<- data.frame(obs = c(Breakdowns$Breakdowns, sim), 
+                group=c(rep("Breakdowns", 1042),rep("Simulation", 1042)))
+
+png(file="Breakdowns/plots/breakdowns_ycomp.png", width=600, height=600)
+ggplot(df, aes(x=obs, fill = group))+
+  geom_bar(alpha=0.5, position="identity", lwd=0.1)+
+  xlim(0,30)+
+  xlab("Value of observation")+
+  ggtitle("Repartition of Breakdowns")+
+  theme(text = element_text(size = 20), legend.title=element_blank())
 dev.off()
 
 png(file="Breakdowns/plots/breakdowns_ycount.png", width=600, height=600)
