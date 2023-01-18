@@ -1,5 +1,4 @@
 #In this file, we make diagnostics on the models we designed in "Breakdowns_models.R"
-
 # Libraries and files -----------------------------------------------------
 library(ggplot2)
 library('lme4')
@@ -15,8 +14,8 @@ source(file = "explo_diag_functions.R")
 load("Breakdowns/Breakdowns.RData")
 # Modify the data set so that it make sense --> explanations in "Breakdowns_functions.R"
 dfnb <- mBreakdowns2nb()
-
 # Negative binomial model -------------------------------------------------
+# Best model given in "Breakdowns_models.R"
 nbmodel <- glm.nb(Breakdowns ~ Tunnel + Slope + Direction + Year + HGV, data = dfnb) 
 # Test of dispersion
 check_overdispersion(nbmodel)

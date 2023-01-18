@@ -1,6 +1,7 @@
 # In this files are some functions for data exploration and data analysis.
 # Libraries and files -----------------------------------------------------
 library(DHARMa)
+library(ggResidpanel)
 # Data exploration --------------------------------------------------------
 # Functions of Candice for correlograms
 panel.hist <- function(x, ...)
@@ -41,4 +42,11 @@ checkvariance <- function(fitted, residual){
 qqplot  <- function(modelx){
   simResids <- simulateResiduals(modelx)
   plotQQunif(simResids)
+}
+
+diagnosticsglm <- function(model){
+  resid_panel(model, plots = c("resid","qq","cookd","lev"))
+}
+diagnosticsglmer <- function(model){
+  resid_panel(model, plots = c("resid","qq","yvp","boxplot"))
 }

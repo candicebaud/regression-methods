@@ -16,6 +16,7 @@ load("Fires/Fires.RData")
 # Models ------------------------------------------------------------------
 df <- mFires()
 dff <- mFires2()
+dfff <- mFires3()
 # Poisson 1 ----
 # Initial ------
 m0 <- glm(Fires ~ log(Traffic) + HGV + log(Length), family="poisson", data=Fires)
@@ -43,7 +44,25 @@ check_outliers(m0)
 # - Based on the following method and threshold: cook (0.84).
 # - For variable: (Whole model).
 
-# # Change in scale "Fires"
+# Poisson model with other link functions ---------------------------------
+# Not good qqplots + over dispersion
+mempty <- glm(Fires ~ Traffic +Length+HGV+Slope+Urban,
+              family= poisson(link = make.link("sqrt")), data=Fires)
+glm.diag.plots(mempty)
+# Bad qqplot
+
+mempty2 <- glm(Fires ~ Traffic + HGV + Slope+Length+Urban+ Type+Direction +
+                 Limit+ SlopeType+Tunnel+Company,
+               start = c(mempty$coefficients,1e-1, 1e-1,1e-1, 1e-1, rep(1e-3,5),
+                         rep(1,91), rep(1,24)),
+              family= poisson(link = make.link("sqrt")), data=Fires)
+glm.diag.plots(mempty2)
+# Really bad plot !
+# step2 <- step(mempty2, direction="backward", start = coefficients)
+# msqrtf <- step(mempty, scope = ~ Direction+ Traffic+ HGV+ Slope+ Urban+ Type+
+#                Length+ Limit+ SlopeType+ Tunnel+ Company, direction = "forward")
+# summary(mempty)
+# # Change in scale "Fires" #####
 # m00 <- glm(Fires ~ Traffic + HGV + Length, family="poisson", data=df)
 # summary(m00)
 # # Residual deviance: 257.70  on 166  degrees of freedom --> over dispersion !

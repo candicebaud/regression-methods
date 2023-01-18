@@ -15,12 +15,15 @@ load("Breakdowns/Breakdowns.RData")
 df <- mBreakdowns()
 dff <- mBreakdowns2()
 dfnb <- mBreakdowns2nb()
+
+# BEST MODEL FOUND --------------------------------------------------------
 # Negative binomial model -------------------------------------------------
  # We have notice a problem of over dispersion in Poisson regression which could 
  # be solve by using a negative binomial model.
  ### Backward selection of variables ######
- nbfull <- glm.nb(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
-                    Urban + Type  + SlopeType + Tunnel + Company, data = dfnb)
+ nbfull <- glm.nb(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + 
+                    Direction+Urban + Type  + SlopeType + Tunnel + Company, 
+                  data = dfnb)
  nbmodel <- step(nbfull, direction = 'backward') 
  summary(nbmodel)
  # Output: Step:  AIC=6475.58
@@ -43,6 +46,7 @@ dfnb <- mBreakdowns2nb()
  # We can notice that the deviance here is much higher than Poisson(2).
  # The model achieved is yet much simpler -> which one to choose between Poisson(2)
  # and this model --> Need to make diagnostics !
+
 
  # Old models -------------------------------------------------------------
  # ------------------------------------------------------------------------
@@ -207,3 +211,12 @@ dfnb <- mBreakdowns2nb()
  #  plot(simResids)
  #  # Adding random effect does not seem to improve the model. we keep all variables
  #  # as fixed ones !
+ # ------------------------------------------------------------------------
+ # Quasi-Poisson ----------------------------------------------------------
+ 
+ # pfull <- glm(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
+ #                    Urban + Type  + SlopeType + Tunnel + Company, data = dfnb,
+ #              family = "quasipoisson")
+ # pmodel <- step(pfull, direction = 'backward') 
+ # summary(pfull)
+ # glm.diag.plots(pfull)
