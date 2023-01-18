@@ -66,8 +66,9 @@ par(mfrow=c(1,2))
 p<-data.frame(rpois(10000,mean(Fires$Fires)))
 ggplot(p,aes(x=p[,1]))+
   geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
-  geom_density(alpha=0.3, lwd=1, bw=0.3)+
-  ggtitle("poisson")
+  geom_density(alpha=0.3, lwd=1, bw=0.3)+ 
+  xlab('Number of Fires') + ylab('density')+
+  ggtitle("Repartition of Fires")
 
 suppressWarnings(pairs(~ Fires + Traffic + HGV + Length + SlopeType + Type + Company, data=Fires, upper.panel = panel.cor, diag.panel = panel.hist))
 ```
@@ -84,7 +85,7 @@ ggplot(p,aes(x=p[,1]))+
   geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
   geom_density(alpha=0.3, lwd=1, bw=0.3)+
   xlab("Number of accidents") + ylab("density") + 
-  ggtitle("Fitted poisson distribution")
+  ggtitle("Repartition of Accidents")
 
 #function below can be erased if we keep the one above for Fires
 panel.hist <- function(x, ...)
