@@ -16,6 +16,17 @@ load("Fires/Fires.RData")
 # Poisson -----------------------------------------------------------------
 opt1 <- glm(Fires ~ log(Traffic) + HGV + log(Length) + Traffic, 
             family="poisson", data=Fires)
+# Export model
+modexport <- data.frame(Coefficients = opt1$coefficients, 
+                        Std.Error = coef(summary(opt1))[,2],
+                        z.value = coef(summary(opt1))[,3],
+                        Pr_z = coef(summary(opt1))[,4])
+colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
+rownames(modexport) <- c("(Intercept)", "log(Traffic)","HGV","log(Length)",
+                         "Traffic")
+
+print.xtable(xtable(modexport,digits = 4, display = c(rep("f", 4),"e")), 
+             file = "Fires/Fires_modelglm.tex")
 # Test of dispersion
 check_overdispersion(opt1)
 
@@ -40,6 +51,14 @@ qqplot(opt1)
 # Poisson random ----------------------------------------------------------
 opt2 <- glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Tunnel ),
               data = Fires, family=poisson)
+# Export model
+# Fixed effects
+modexport <- as.data.frame(summary(opt2)$coefficients)
+colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
+rownames(modexport) <- c("(Intercept)", "log(Traffic)","HGV", "log(Length)")
+
+print.xtable(xtable(modexport,digits = 4, display = c(rep("f", 4),"e")), 
+             file = "Fires/Fires_modelglmr_fixed.tex")
 
 # Test of dispersion
 check_overdispersion(opt2)

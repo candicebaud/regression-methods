@@ -8,6 +8,7 @@ library(GGally)
 library(boot)
 library(glmmTMB)
 library(performance)
+library(xtable)
 source(file = "Breakdowns/Breakdowns_functions.R")
 source(file = "explo_diag_functions.R")
 # Loading data set --------------------------------------------------------
@@ -16,12 +17,27 @@ load("Breakdowns/Breakdowns.RData")
 dfnb <- mBreakdowns2nb()
 # Negative binomial model -------------------------------------------------
 # Best model given in "Breakdowns_models.R"
-nbmodel <- glm.nb(Breakdowns ~ Tunnel + Slope + Direction + Year + HGV, data = dfnb) 
+nbmodel <- glm.nb(Breakdowns ~ Slope + Direction + Year + HGV+Tunnel , data = dfnb)
+
+# Export summary
+modexport <- data.frame(Coefficients = nbmodel$coefficients[1:13], 
+                        Std.Error = coef(summary(nbmodel))[1:13,2],
+                        z.value = coef(summary(nbmodel))[1:13,3],
+                        Pr_z = coef(summary(nbmodel))[1:13,4])
+colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
+rownames(modexport) <- c("(Intercept)", "Slope", "Direction: Direction 2",
+                         "Year: 2003", "Year: 2004", "Year: 2005", "Year: 2006",
+                         "Year: 2007", "Year: 2008", "Year: 2009", "Year: 2010", 
+                         "Year: 2011", "HGV")
+
+print.xtable(xtable(modexport,digits = 4,display = c(rep("f", 4),"e")), 
+             file = "Breakdowns/Breakdowns_model.tex")
+
 # Test of dispersion
 check_overdispersion(nbmodel)
 
 # Test of outliers
-check_outliers(nbmodel)
+check_outliers()
 
 # Diagnostics
 png(file="Breakdowns/plots/breakdowns_diagnostics.png", width=600, height=600)

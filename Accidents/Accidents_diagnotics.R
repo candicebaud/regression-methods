@@ -18,6 +18,22 @@ load("Accidents/Accidents.RData")
 model <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type +
                Width + Direction + Slope + HGV + Year , family=poisson,
              data=Accidents)
+# Export model
+modexport <- data.frame(Coefficients = model$coefficients, 
+                        Std.Error = coef(summary(model))[,2],
+                        z.value = coef(summary(model))[,3],
+                        Pr_z = coef(summary(model))[,4])
+colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
+rownames(modexport) <- c("(Intercept)", "log(Traffic)", "SlopeType: Bassin",
+                         "SlopeType: Unknown", "SlopeType: Cotinuous slope",
+                         "SlopeType: Roof", "log(Length)", "Limit", 
+                         "Type: Unidirectional", "Width", "Direction: Direction2",
+                         "Slope", "HGV", "Year")
+
+print.xtable(xtable(modexport,digits = 4, display = c(rep("f", 4),"e")), 
+             file = "Accidents/Accidents_modelglm.tex")
+
+
 # Test of dispersion
 check_overdispersion(model)
 
@@ -42,6 +58,17 @@ qqplot(model)
 modelglmr <- glmer(Acc~ log(Traffic) + log(Length) + Slope + Type + Width + 
                      (1 | Tunnel) + (1 | Company), 
                    family=poisson, data = Accidents)
+# Export model
+# Fixed effects
+modexport <- as.data.frame(summary(modelglmr)$coefficients)
+colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
+rownames(modexport) <- c("(Intercept)", "log(Traffic)", "log(Length)", "Slope",
+                         "Type: Unidirectional", "Width")
+
+print.xtable(xtable(modexport,digits = 4, display = c(rep("f", 4),"e")), 
+             file = "Accidents/Accidents_modelglmr_fixed.tex")
+
+
 # Test of dispersion --> there is over dispersion
 check_overdispersion(modelglmr)
 
