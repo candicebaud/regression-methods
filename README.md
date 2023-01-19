@@ -1,10 +1,13 @@
 # regression-methods
-#CelGx
-- "Data" contains the 3 data sets.
-- "exploAccidents", "exploBreakdowns", "exploFires" there are my first explorations of the data.
-- "Report" file is an RMarkdown that produces pdf files. We can use LaTeX expressions in it. 
-- "biblio","CUP.bst" are used to create "Report". DO NOT MODIFY THEM
-- ".gitignore" is just not to add useless things into repo. DO NOT MODIFY.
-- "accidents code" is the R file used for exploratory + first models on Accidents
-- "accidents Rmarkdown.Rmd" is the Markdown file corresponding to "accidents code"
-- "accidents Rmarkdown.html" is the html file corresponding to the markdown 
+
+Please read document "Final_Report.html".
+
+
+Also, knot that:
+
+-In Accidents, you find all files related to data set Accident.
+-In Fires, you find all files related to data set Fires.
+-In Breakdowns, you find all files related to data set Breakdowns.
+- "law_response_y.R" is the file where we have implemented boostrape test.
+- "explo_diag_functions.R" contains functions for data exploration and diagnostics.
+- other file names speak for themselves.

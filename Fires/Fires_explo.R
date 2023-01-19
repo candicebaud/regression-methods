@@ -13,42 +13,42 @@ source(file = "explo_diag_functions.R")
 load("Fires/Fires.RData")
 # Data visualisation ------------------------------------------------------
 # Change the scale of the parameters that needs to
-mFires <- mFires()
+# mFires <- mFires()
 
 # Repartition of the response variable y
-png(file="Fires/plots/fires_ydensity.png", width=600, height=600)
-ggplot(Fires, aes(x=Fires))+
-  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
-  geom_density(alpha=0.3, lwd=1)+
-  xlab("Number of Fires")+
-  ggtitle("Repartition of Fires")+
-  theme(text = element_text(size = 20)) 
-dev.off()
+# png(file="Fires/plots/fires_ydensity.png", width=600, height=600)
+# ggplot(Fires, aes(x=Fires))+
+#   geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+#   geom_density(alpha=0.3, lwd=1)+
+#   xlab("Number of Fires")+
+#   ggtitle("Repartition of Fires")+
+#   theme(text = element_text(size = 20)) 
+# dev.off()
 
 sim<- rpois(length(Fires$Fires), mean(Fires$Fires))
 df<- data.frame(obs = c(Fires$Fires, sim),
                 group= c(rep("Fires", length(Fires$Fires)),
                          rep("Simulation", length(Fires$Fires))))
-png(file="Fires/plots/fires_ycomp.png", width=600, height=600)
+# png(file="Fires/plots/fires_ycomp.png", width=600, height=600)
 ggplot(df, aes(x=obs, fill = group))+
   geom_bar(alpha=0.5, position="identity", lwd=0.1)+
   xlab("Value of observation")+
   ggtitle("Repartition of Fires")+
   theme(text = element_text(size = 20), legend.title=element_blank())
-dev.off()
+# dev.off()
 
-png(file="Fires/plots/fires_ycount.png", width=600, height=600)
-ggplot(Fires, aes(x=Fires))+
-  geom_histogram(alpha=0.4, position="identity", lwd=0.1)+
-  xlab("Number of Fires")+
-  ggtitle("Repartition of Fires")+
-  theme(text = element_text(size = 20)) 
-dev.off()
+# png(file="Fires/plots/fires_ycount.png", width=600, height=600)
+# ggplot(Fires, aes(x=Fires))+
+#   geom_histogram(alpha=0.4, position="identity", lwd=0.1)+
+#   xlab("Number of Fires")+
+#   ggtitle("Repartition of Fires")+
+#   theme(text = element_text(size = 20)) 
+# dev.off()
 
 # Correlation of parameters
 # Best try
-png(file="Fires/plots/fires_corr.png", pointsize = 14, 
-    width=800, height=800)
+# png(file="Fires/plots/fires_corr.png", pointsize = 14, 
+    # width=800, height=800)
 suppressWarnings(pairs(~ Fires + Traffic + HGV + Slope + Limit + Length, 
                        data=Fires, upper.panel = panel.cor, diag.panel = panel.hist))
-dev.off()
+# dev.off()

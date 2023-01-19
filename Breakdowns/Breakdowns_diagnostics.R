@@ -19,39 +19,39 @@ dfnb <- mBreakdowns2nb()
 # Best model given in "Breakdowns_models.R"
 nbmodel <- glm.nb(Breakdowns ~ Slope + Direction + Year + HGV+Tunnel , data = dfnb)
 
-# Export summary
-modexport <- data.frame(Coefficients = nbmodel$coefficients[1:13], 
-                        Std.Error = coef(summary(nbmodel))[1:13,2],
-                        z.value = coef(summary(nbmodel))[1:13,3],
-                        Pr_z = coef(summary(nbmodel))[1:13,4])
-colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
-rownames(modexport) <- c("(Intercept)", "Slope", "Direction: Direction 2",
-                         "Year: 2003", "Year: 2004", "Year: 2005", "Year: 2006",
-                         "Year: 2007", "Year: 2008", "Year: 2009", "Year: 2010", 
-                         "Year: 2011", "HGV")
+# # Export summary
+# modexport <- data.frame(Coefficients = nbmodel$coefficients[1:13], 
+#                         Std.Error = coef(summary(nbmodel))[1:13,2],
+#                         z.value = coef(summary(nbmodel))[1:13,3],
+#                         Pr_z = coef(summary(nbmodel))[1:13,4])
+# colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
+# rownames(modexport) <- c("(Intercept)", "Slope", "Direction: Direction 2",
+#                          "Year: 2003", "Year: 2004", "Year: 2005", "Year: 2006",
+#                          "Year: 2007", "Year: 2008", "Year: 2009", "Year: 2010", 
+#                          "Year: 2011", "HGV")
 
-print.xtable(xtable(modexport,digits = 4,display = c(rep("f", 4),"e")), 
-             file = "Breakdowns/Breakdowns_model.tex")
+# print.xtable(xtable(modexport,digits = 4,display = c(rep("f", 4),"e")), 
+             # file = "Breakdowns/Breakdowns_model.tex")
 
 # Test of dispersion
-check_overdispersion(nbmodel)
+# check_overdispersion(nbmodel)
 
 # Test of outliers
-check_outliers()
+# check_outliers()
 
 # Diagnostics
-png(file="Breakdowns/plots/breakdowns_diagnostics.png", width=600, height=600)
+# png(file="Breakdowns/plots/breakdowns_diagnostics.png", width=600, height=600)
 glm.diag.plots(nbmodel)
-dev.off()
+# dev.off()
 # Some other diagnostics, not to add in the final report.
 # Checking linearity
-checklinearity(nbmodel$fitted.values,nbmodel$residuals)
-
-# Checking the variance
-checkvariance(nbmodel$fitted.values,nbmodel$residuals)
-
-# QQ-plot
-qqplot(nbmodel)
+# checklinearity(nbmodel$fitted.values,nbmodel$residuals)
+# 
+# # Checking the variance
+# checkvariance(nbmodel$fitted.values,nbmodel$residuals)
+# 
+# # QQ-plot
+# qqplot(nbmodel)
 
 # Old models --------------------------------------------------------------
 # -------------------------------------------------------------------------

@@ -15,70 +15,72 @@ load("Accidents/Accidents.RData")
 
 # BEST MODELS -------------------------------------------------------------
 # Model1 ------------------------------------------------------------------
+print("Poisson model")
 model <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type +
                Width + Direction + Slope + HGV + Year , family=poisson,
              data=Accidents)
-# Export model
-modexport <- data.frame(Coefficients = model$coefficients, 
-                        Std.Error = coef(summary(model))[,2],
-                        z.value = coef(summary(model))[,3],
-                        Pr_z = coef(summary(model))[,4])
-colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
-rownames(modexport) <- c("(Intercept)", "log(Traffic)", "SlopeType: Bassin",
-                         "SlopeType: Unknown", "SlopeType: Cotinuous slope",
-                         "SlopeType: Roof", "log(Length)", "Limit", 
-                         "Type: Unidirectional", "Width", "Direction: Direction2",
-                         "Slope", "HGV", "Year")
+# # Export model
+# modexport <- data.frame(Coefficients = model$coefficients, 
+#                         Std.Error = coef(summary(model))[,2],
+#                         z.value = coef(summary(model))[,3],
+#                         Pr_z = coef(summary(model))[,4])
+# colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
+# rownames(modexport) <- c("(Intercept)", "log(Traffic)", "SlopeType: Bassin",
+#                          "SlopeType: Unknown", "SlopeType: Cotinuous slope",
+#                          "SlopeType: Roof", "log(Length)", "Limit", 
+#                          "Type: Unidirectional", "Width", "Direction: Direction2",
+#                          "Slope", "HGV", "Year")
+# 
+# print.xtable(xtable(modexport,digits = 4, display = c(rep("f", 4),"e")), 
+#              file = "Accidents/Accidents_modelglm.tex")
 
-print.xtable(xtable(modexport,digits = 4, display = c(rep("f", 4),"e")), 
-             file = "Accidents/Accidents_modelglm.tex")
 
-
-# Test of dispersion
-check_overdispersion(model)
-
-# Test of outliers
-check_outliers(model)
-
-# Diagnostics
-png(file="Accidents/plots/accidents_diagnosticsglm.png", width=600, height=600)
+# # Test of dispersion
+# check_overdispersion(model)
+# 
+# # Test of outliers
+# check_outliers(model)
+# 
+# # Diagnostics
+# png(file="Accidents/plots/accidents_diagnosticsglm.png", width=600, height=600)
 diagnosticsglm(model)
-dev.off()
-# Some other diagnostics, not to add in the final report.
-# Checking linearity
-checklinearity(model$fitted.values,model$residuals)
-
-# Checking the variance
-checkvariance(model$fitted.values,model$residuals)
-
-# QQ-plot
-qqplot(model)
+# dev.off()
+# # Some other diagnostics, not to add in the final report.
+# # Checking linearity
+# checklinearity(model$fitted.values,model$residuals)
+# 
+# # Checking the variance
+# checkvariance(model$fitted.values,model$residuals)
+# 
+# # QQ-plot
+# qqplot(model)
 
 # Model glmr --------------------------------------------------------------
+print("Poisson mixed model")
 modelglmr <- glmer(Acc~ log(Traffic) + log(Length) + Slope + Type + Width + 
                      (1 | Tunnel) + (1 | Company), 
                    family=poisson, data = Accidents)
-# Export model
-# Fixed effects
-modexport <- as.data.frame(summary(modelglmr)$coefficients)
-colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
-rownames(modexport) <- c("(Intercept)", "log(Traffic)", "log(Length)", "Slope",
-                         "Type: Unidirectional", "Width")
-
-print.xtable(xtable(modexport,digits = 4, display = c(rep("f", 4),"e")), 
-             file = "Accidents/Accidents_modelglmr_fixed.tex")
-
-
-# Test of dispersion --> there is over dispersion
-check_overdispersion(modelglmr)
-
-# Test of outliers --> no outliers detected
-check_outliers(modelglmr)
-
-# Diagnostics --> bad qq-plot and residual vs fitted
-png(file="Accidents/plots/accidents_diagnosticsglmr.png", width=600, height=600)
+# # Export model
+# # Fixed effects
+# modexport <- as.data.frame(summary(modelglmr)$coefficients)
+# colnames(modexport) <- c("Coefficients", "Std.Error", "z value", "Pr(>|z|)")
+# rownames(modexport) <- c("(Intercept)", "log(Traffic)", "log(Length)", "Slope",
+#                          "Type: Unidirectional", "Width")
+# 
+# print.xtable(xtable(modexport,digits = 4, display = c(rep("f", 4),"e")), 
+#              file = "Accidents/Accidents_modelglmr_fixed.tex")
+# 
+# 
+# # Test of dispersion --> there is over dispersion
+# check_overdispersion(modelglmr)
+# 
+# # Test of outliers --> no outliers detected
+# check_outliers(modelglmr)
+# 
+# # Diagnostics --> bad qq-plot and residual vs fitted
+# png(file="Accidents/plots/accidents_diagnosticsglmr.png", width=600, height=600)
 diagnosticsglmer(modelglmr)
-dev.off()
+# dev.off()
 
 # Some other diagnostics, not to add in the final report.
 # # Checking linearity
@@ -88,7 +90,7 @@ dev.off()
 # checkvariance(modelglmr$fitted.values,modelglmr$residuals)
 
 # QQ-plot
-qqplot(modelglmr)
+# qqplot(modelglmr)
 
 # OLD MODELS --------------------------------------------------------------
 # # Model 2 -----------------------------------------------------------------
