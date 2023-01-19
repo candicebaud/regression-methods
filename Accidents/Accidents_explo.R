@@ -22,6 +22,20 @@ ggplot(p,aes(x=p[,1]))+
   theme(text = element_text(size = 20)) 
 dev.off()
 
+sim<- rpois(length(Accidents$Acc), mean(Accidents$Acc))
+df<- data.frame(obs = c(Accidents$Acc, sim),
+                group= c(rep("Accidents", length(Accidents$Acc)),
+                             rep("Simulation", length(Accidents$Acc))))
+png(file="Accidents/plots/accidents_ycomp.png", width=600, height=600)
+ggplot(df, aes(x=obs, fill = group))+
+  geom_bar(alpha=0.5, position="identity", lwd=0.1)+
+  xlim(0,30)+
+  xlab("Value of observation")+
+  ggtitle("Repartition of Accidents")+
+  theme(text = element_text(size = 20), legend.title=element_blank())
+dev.off()
+                        
+
 png(file="Accidents/plots/accidents_ydensity.png", width=600, height=600)
 ggplot(Accidents,aes(x=Acc))+
   geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+

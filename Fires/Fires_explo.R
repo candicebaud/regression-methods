@@ -25,6 +25,18 @@ ggplot(Fires, aes(x=Fires))+
   theme(text = element_text(size = 20)) 
 dev.off()
 
+sim<- rpois(length(Fires$Fires), mean(Fires$Fires))
+df<- data.frame(obs = c(Fires$Fires, sim),
+                group= c(rep("Fires", length(Fires$Fires)),
+                         rep("Simulation", length(Fires$Fires))))
+png(file="Fires/plots/fires_ycomp.png", width=600, height=600)
+ggplot(df, aes(x=obs, fill = group))+
+  geom_bar(alpha=0.5, position="identity", lwd=0.1)+
+  xlab("Value of observation")+
+  ggtitle("Repartition of Fires")+
+  theme(text = element_text(size = 20), legend.title=element_blank())
+dev.off()
+
 png(file="Fires/plots/fires_ycount.png", width=600, height=600)
 ggplot(Fires, aes(x=Fires))+
   geom_histogram(alpha=0.4, position="identity", lwd=0.1)+
