@@ -109,16 +109,16 @@ dfnb <- mBreakdowns2nb()
  # # Based on the second choice of changes in the scales of variables
  # ### Backward selection of variables ######
  # Poissonfull2 <- glm(Breakdowns ~ Year + HGV + Slope + Limit + Traffic+ Length + Direction+
- #                       Urban + Type  + SlopeType + Tunnel + Company, 
- #                     family="poisson", data=dff)
- # model2 <- step(Poissonfull2, direction = 'backward') 
+ #                       Urban + Type  + SlopeType + Tunnel + Company,
+ #                     family="poisson", data=dfnb)
+ # model2 <- step(Poissonfull2, direction = 'backward')
+ # summary(model2)
+ # # # Breakdowns ~ Year + HGV + Slope + Traffic + Length + 
+ # # Direction + Tunnel
+ # # Residual deviance:  4551.5  on  937  degrees of freedom --> over dispersion
+ # # AIC: 8470.7
  # 
- # # Output : Step:  AIC=Inf
- # # Breakdowns ~ Year + HGV + Slope + Limit + Traffic + Length + 
- # # Direction + Urban + Type + SlopeType + Tunnel
- # # Residual deviance:  297.96  on  937  degrees of freedom
- # # summary(model2)
- # # Here we do a simple check
+ # # # Here we do a simple check
  # simResids <- simulateResiduals(model2)
  # plot(simResids)
  # 
