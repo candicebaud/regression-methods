@@ -1,0 +1,243 @@
+---
+title: "Project Regression Methods - 2022"
+author: "Céline Guex - sciper n°310673, Candice Baud - sciper n°359523"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    df_print: paged
+  includes:
+    in_header: Preamble.tex
+  pdf_document:
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+lapply(c("dplyr","chron","ggplot2","tidyr","questionr","survival","forcats",
+         "data.table","table1","lubridate", "ggpubr","viridis","finalfit",
+         "ggpubr", "ggthemes", "gridExtra", "tidyverse", "rstatix","ggsci",
+         "wesanderson","kableExtra",      "naniar", "boot", "scales", "psych",          "ggcorrplot", "ggradar", "caret", "gam"), 
+       library, character.only=TRUE)
+```
+
+```{r loading-data}
+load("Data/Breakdowns.RData")
+load("Data/Accidents.RData")
+load("Data/Fires.RData")
+Fi<-Fires
+Fi$Direction <- as.factor(Fi$Direction)
+Fi$Urban <- as.factor(Fi$Urban)
+Fi$Type <- as.factor(Fi$Type)
+Fi$Limit <- as.factor(Fi$Limit)
+Fi$SlopeType <- as.factor(Fi$SlopeType)
+Fi$Tunnel <- as.factor(Fi$Tunnel)
+Fi$Company <- as.factor(Fi$Company)
+Ac<- Accidents
+
+```
+
+# Initial data analysis
+## Description of Fires dataset
+```{r exploratory, echo=FALSE}
+panel.hist <- function(x, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+}
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+par(mfrow=c(1,2)) 
+
+p<-data.frame(rpois(10000,mean(Fires$Fires)))
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.3, lwd=1, bw=0.3)+ 
+  xlab('Number of Fires') + ylab('density')+
+  ggtitle("Repartition of Fires")
+
+suppressWarnings(pairs(~ Fires + Traffic + HGV + Length + SlopeType + Type + Company, data=Fires, upper.panel = panel.cor, diag.panel = panel.hist))
+```
+
+## Description of Accidents dataset
+```{r Accidents corr and fit, echo=FALSE}
+#exponential dist
+#p<-data.frame(rexp(100,1/mean(Accidents$Acc)))
+#ggplot(p,aes(x=p[,1]))+ geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+ geom_density(alpha=0.5, lwd=1, bw=0.5)+ ggtitle("exp(0.25)")
+
+
+p<-data.frame(rpois(10000,mean(Accidents$Acc)))
+ggplot(p,aes(x=p[,1]))+
+  geom_histogram(aes(y=..density..), alpha=0.4, position="identity", lwd=0.1)+
+  geom_density(alpha=0.3, lwd=1, bw=0.3)+
+  xlab("Number of accidents") + ylab("density") + 
+  ggtitle("Repartition of Accidents")
+
+#function below can be erased if we keep the one above for Fires
+panel.hist <- function(x, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+}
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+
+suppressWarnings(pairs(~ Acc + Traffic + Limit + Lanes + Urban + SlopeType ,  data=Accidents, upper.panel = panel.cor, diag.panel = panel.hist))
+
+```
+## Description of Breakdowns dataset
+
+# Model fitting
+## Fires
+### Poisson model
+```{r selection, echo =FALSE, include=FALSE}
+library('glmtoolbox')
+fullmodel <- glm(Fires ~ log(Traffic) + HGV + Slope + Limit+ log(Length) + Direction + Urban + Type + Length + Traffic, family="poisson", data=Fires)
+model <- stepCriterion(fullmodel, direction = 'backward')
+``` 
+
+The best model according to AIC includes the following variables :
+```{r selection result, echo =FALSE}
+model$final
+``` 
+```{r better model, echo=FALSE}
+m2 <- glm(Fires ~ log(Traffic) + HGV + log(Length) + Traffic, family="poisson", data=Fires)
+summary(m2)
+#par(mfrow=c(2,2)) 
+#plot(m2)
+```
+
+The model we fitted implies this equation :
+$$
+\ln(\mathbb{E}(Fires)) = -27.70 + 1.178*\log(Traffic) +6.386*HGV + 0.6967*\log(Length) -1.19*10**9*Traffic
+$$
+```{r residuals model, echo=FALSE}
+plot(m2$fitted.values, m2$residuals, col='black', xlab = 'Fitted values', ylab='Residuals', main='Residuals')
+```
+
+### Poisson mixed model
+```{r Mixed model tunnel, echo=FALSE}
+library('lme4')
+mixed_model <- glmer(Fires ~ log(Traffic) + HGV + log(Length) + (1 | Tunnel ), data = Fires, family=poisson)
+summary(mixed_model)
+```
+
+```{r Mixed model tunnel residuals, echo=FALSE}
+library("lme4")
+plot(mixed_model, col='black', xlab = 'Fitted values', ylab='Residuals', main='Residuals')
+``` 
+
+## Accidents
+### Poisson model without the variables Tunnel and Company
+First we rescale the variable to have mean=variance. 
+```{r rescale variable accidents, echo=FALSE}
+Accidents <- Accidents %>% mutate(
+  Acc_sc = 0.5*sqrt(Accidents$Acc)
+)
+
+#We have that the mean is different than the standard deviation so we want to equalize them to apply the poisson model
+#y <- Accidents$Acc
+#y_prime <- 0.5*sqrt(y)
+
+#mean(y_prime)
+#sd(y_prime)
+``` 
+
+
+```{r variable selection, echo=FALSE}
+library('glmtoolbox')
+fullmodel <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes + Year, family=poisson, data=Accidents)
+
+#fullmodel2 <- glm(Acc ~ Lanes + Direction + log(Traffic) + HGV + Slope + Urban + Type + log(Length) + Limit + SlopeType + Width + Lanes + Year, family=poisson, data=Accidents)
+#summary(fullmodel2)
+
+
+stepCriterion(fullmodel, criterion = 'aic', direction = c('forward', 'backward'))
+``` 
+
+
+```{r poisson model, echo=FALSE}
+model <- glm(Acc ~ log(Traffic) + SlopeType + log(Length) + Limit + Type + Width + Direction + Slope + HGV + Year , family=poisson, data=Accidents)
+summary(model)
+``` 
+
+The model equation we obtained is put below. 
+$$
+\ln(\mathbb{E}(Accidents)) = -51.286647 + 0.626838*\log(Traffic) + 0.582956*\log(Length) -0.018712*Limit -0.614479*Width -2.480020*Slope -0.867039*HGV + 0.020613 -0.139456*Direction2 + 0.947456*TypeUnidirectionnal +  0.886806*SlopeTypeBasin + 1.022039*SlopeTypeUnknown + 0.144215*SlopeTypeContinuous -0.590130*SlopeTypeRoof + 
+$$
+
+```{r poisson model residuals, echo=FALSE}
+plot(model$fitted.values, model$residuals, col='black', xlab = 'Fitted values', ylab='Residuals', main='Residuals')
+```
+
+### Poisson model with random effects
+
+```{r model selection test, echo=FALSE}
+library("cAIC4")
+mod1 <- lmer(Acc ~ log(Traffic) + log(Length) + (1|Company) + (1|Tunnel), data=Accidents)
+stepcAIC(mod1, groupCandidates=NULL, fixEfCandidates = c('Slope','Type', 'Width', 'HGV'), data=Accidents, trace=TRUE, direction="both", keep = list('Company','Tunnel'))
+```
+
+
+```{r mixed model without rescaled variables, echo=FALSE}
+library('lme4')
+#log(Traffic) ok 5317
+#log(Traffic) + log(Length) ok 5309
+#log(Traffic) + log(Length) + Slope ok AIC 5297
+# avec limit pb
+#log(Traffic) + log(Length) + Slope + Type AIC 5294
+#avec HGV fail to converge
+#log(Traffic) + log(Length)  + HGV 5311
+#avec Year fail 
+#avec Direction fail 
+#log(Traffic) + log(Length) + Slope + Type + Width 5291
+#avec slopeType fail
+modeltest<- glmer(Acc~ log(Traffic) + log(Length) + Slope + Type + Width + (1 | Tunnel) + (1 | Company), family=poisson, data = Accidents)
+summary(modeltest)
+``` 
+
+
+```{r mixed model without rescaled variables residuals, echo=FALSE}
+plot(modeltest, col='black', xlab = 'Fitted values', ylab='Residuals', main='Residuals')
+```
+
+
+## Breakdowns
+
+
+# Discussion 
+
+
+
+# References 
+
+
+
