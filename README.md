@@ -3,7 +3,7 @@
 Please read document "Final_Report.html".
 
 
-Also, knot that:
+Also, note that:
 
 -In Accidents, you find all files related to data set Accident.
 -In Fires, you find all files related to data set Fires.
