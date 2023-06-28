@@ -1,6 +1,6 @@
 # Regression methods project
 
-Please read document "Final_Report.html".\
+Please read document "Final_Report.html".
 
 
 Also, note that:
